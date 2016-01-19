@@ -69,7 +69,7 @@ namespace CUBRID.Data.CUBRIDClient
     private int connTimeout = 30; //seconds
     private string database = "";
     private string db_version = "";
-    private CUBRIDIsolationLevel isolationLevel = CUBRIDIsolationLevel.TRAN_DEFAULT_ISOLATION;
+    private CUBRIDIsolationLevel isolationLevel = CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE;
     private int lockTimeout = -1; //the connection lock timeout as milliseconds.
     private const int maxStringLength = Int16.MaxValue;
     private string password = "";
@@ -473,7 +473,8 @@ namespace CUBRID.Data.CUBRIDClient
           level = CUBRIDIsolationLevel.TRAN_REP_CLASS_COMMIT_INSTANCE;
           break;
         case System.Data.IsolationLevel.ReadUncommitted:
-          throw new CUBRIDException(Utils.GetStr(MsgId.NotSupportedInCUBRID));
+          level = CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE;
+          break;
         case System.Data.IsolationLevel.RepeatableRead:
           level = CUBRIDIsolationLevel.TRAN_REP_CLASS_REP_INSTANCE;
           break;

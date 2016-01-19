@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CUBRID.Data, Version=9.3.0.0, Culture=neutral, PublicKeyToken=de9d5b1064656ed6, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Src\bin\Debug\CUBRID.Data.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
@@ -68,12 +72,6 @@
   <ItemGroup>
     <Content Include="lib\CUBRID.Data.dll" />
     <Content Include="Resource\ReservedKeyWords.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Src\CUBRID.Data.CUBRIDClient.csproj">
-      <Project>{e2640c6c-f055-4f2b-b1eb-e4ac1c9522bc}</Project>
-      <Name>CUBRID.Data.CUBRIDClient</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

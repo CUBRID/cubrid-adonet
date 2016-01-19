@@ -150,7 +150,7 @@ namespace CUBRID.Data.CUBRIDClient
 
     internal struct T_CCI_COL_INFO
     {
-        public char ext_type;
+        public CUBRIDDataType type;
         public char is_non_null;
         public short scale;
         public int precision;
@@ -195,6 +195,7 @@ namespace CUBRID.Data.CUBRIDClient
 
     internal static class CciInterface
     {
+        //const string dll_name = @"F:\05SVN\CUBRID\ado.net\Code\Win32\Debug\cascci.dll";
         const string dll_name = @"cascci.dll";
         [DllImport(dll_name, EntryPoint = "cci_get_db_version", CharSet = CharSet.Ansi)]
         public static extern int cci_get_db_version(int con_handle, StringBuilder out_buf, int capacity);
@@ -262,6 +263,7 @@ namespace CUBRID.Data.CUBRIDClient
         {
             int stmt_type = 0;
             int col_num = 0;
+            //IntPtr pt = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(T_CCI_COL_INFO)));
 
             IntPtr pt = cci_get_result_info_internal(req_handle, ref stmt_type, ref col_num);
             ColumnMetaData[] item = new ColumnMetaData[col_num];
@@ -274,7 +276,7 @@ namespace CUBRID.Data.CUBRIDClient
                     T_CCI_COL_INFO tmp =
                         (T_CCI_COL_INFO)Marshal.PtrToStructure((IntPtr)((UInt32)pt +
                         i * Marshal.SizeOf(typeof(T_CCI_COL_INFO))), typeof(T_CCI_COL_INFO));
-                    data.Type = (CUBRIDDataType)tmp.ext_type;
+                    data.Type = tmp.type;
 
                     data.IsAutoIncrement = int_to_bool(tmp.is_auto_increment - 0);
                     data.IsForeignKey = int_to_bool(tmp.is_foreign_key - 0);
@@ -289,7 +291,7 @@ namespace CUBRID.Data.CUBRIDClient
                     data.Name = tmp.col_name;
                     data.Scale = tmp.scale;
                     data.Table = tmp.class_name;
-                    data.Type = (CUBRIDDataType)tmp.ext_type;
+                    data.Type = tmp.type;
                 }
                 catch
                 {
@@ -502,25 +504,19 @@ namespace CUBRID.Data.CUBRIDClient
                     break;
                 default:
                     res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_STR, ref value, ref indicator);
-                    if (value != IntPtr.Zero)
+                    if (conn.GetEncoding().Equals(Encoding.UTF8))
                     {
-                        if (conn.GetEncoding().Equals(Encoding.UTF8))
+                        Byte[] v = Encoding.Unicode.GetBytes(Marshal.PtrToStringUni(value));
+                        int count = 0;
+                        while (count<v.Length &&  v[count] != 0)
                         {
-                            Byte[] v = Encoding.Unicode.GetBytes(Marshal.PtrToStringUni(value));
-                            int count = 0;
-                            while (count < v.Length && v[count] != 0)
-                            {
-                                count++;
-                            }
-                            rt[col_no - 1] = Encoding.Unicode.GetString(Encoding.Convert(Encoding.UTF8, Encoding.Unicode, v, 0, count));
+                            count++;
                         }
-                        else
-                        {
-                            rt[col_no - 1] = Marshal.PtrToStringAnsi(value);
-                        }
+                        rt[col_no - 1] = Encoding.Unicode.GetString(Encoding.Convert(Encoding.UTF8, Encoding.Unicode, v, 0, count));
                     }
-                    else {
-                        rt[col_no - 1] = String.Empty;
+                    else
+                    {
+                        rt[col_no - 1] = Marshal.PtrToStringAnsi(value);
                     }
                     if (is_collection_type((CUBRIDDataType)type))
                     {

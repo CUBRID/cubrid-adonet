@@ -1,10 +1,10 @@
 Release Notes
 ================================================================================
-April 2014 - Update for release 10.0.0
+April 2014 - Update for release 9.3.0
 
 CUBRID ADO.NET Data Provider
-Version: 10.0.0.0001
-CUBRID engine compatible: 10.0.0
+Version: 9.3.0.0001
+CUBRID engine compatible: 9.3.0
 Online Wiki: http://www.cubrid.org/wiki_apis/entry/cubrid-ado-net-driver
 ================================================================================
 

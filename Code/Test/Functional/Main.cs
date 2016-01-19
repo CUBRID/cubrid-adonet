@@ -66,11 +66,11 @@ namespace Test.Functional
         #endregion
 
         [TestMethod]
-        public void TestMethodCommon()
+        public void TestMethod1()
         {
             //
             // TODO: Add test logic here
-            // Test case:78
+            //
             TestCases.Run();
         }
         [TestMethod]
@@ -78,7 +78,7 @@ namespace Test.Functional
         {
             //
             // TODO: Add test logic here
-            // Test case:15
+            //
             TestCases.TestSequenceRun();
         }
 

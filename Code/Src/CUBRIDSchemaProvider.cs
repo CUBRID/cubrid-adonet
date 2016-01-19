@@ -215,7 +215,7 @@ namespace CUBRID.Data.CUBRIDClient
                 dt.Columns.Add("DATA_TYPE", typeof(string));
                 dt.Columns.Add("NUMERIC_PRECISION", typeof(uint));
                 dt.Columns.Add("NUMERIC_SCALE", typeof(uint));
-                dt.Columns.Add("CHARACTER_SET", typeof(string));
+                dt.Columns.Add("CHARACTER_SET", typeof(byte));
 
                 string tableName = "%";
                 string columnName = "%";
@@ -246,7 +246,7 @@ namespace CUBRID.Data.CUBRIDClient
         {
             string sql =
               String.Format(
-                "select attr_name, default_value, is_nullable, `data_type`, prec, scale, charset from db_attribute where class_name like '{0}' and attr_name like '{1}' order by def_order asc",
+                "select attr_name, default_value, is_nullable, `data_type`, prec, scale, code_set from db_attribute where class_name like '{0}' and attr_name like '{1}' order by def_order asc",
                 tableName, columnRestriction);
             using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
             {
@@ -269,7 +269,7 @@ namespace CUBRID.Data.CUBRIDClient
                         row["DATA_TYPE"] = reader.GetString(3);
                         row["NUMERIC_PRECISION"] = reader.GetInt(4);
                         row["NUMERIC_SCALE"] = reader.GetInt(5);
-                        row["CHARACTER_SET"] = reader.GetString(6);
+                        row["CHARACTER_SET"] = reader.GetInt(6);
 
                         dt.Rows.Add(row);
                     }

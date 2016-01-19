@@ -295,10 +295,10 @@ namespace ADOTest
             CUBRIDConnection conn = new CUBRIDConnection(DBHelper.connString);
             conn.Open();
 
-            CUBRIDTransaction transaction = conn.BeginTransaction(CUBRIDIsolationLevel.TRAN_DEFAULT_ISOLATION);
+            CUBRIDTransaction transaction = conn.BeginTransaction(CUBRIDIsolationLevel.TRAN_COMMIT_CLASS_COMMIT_INSTANCE);
             Console.WriteLine(transaction.CUBRIDIsolationLevel);
-
-            Assert.AreEqual(CUBRIDIsolationLevel.TRAN_DEFAULT_ISOLATION, transaction.CUBRIDIsolationLevel);
+            
+            Assert.AreEqual(CUBRIDIsolationLevel.TRAN_COMMIT_CLASS_COMMIT_INSTANCE, transaction.CUBRIDIsolationLevel);
             LogStepPass();
 
 

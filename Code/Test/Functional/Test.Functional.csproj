@@ -36,7 +36,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CUBRID.Data, Version=10.0.0.0, Culture=neutral, PublicKeyToken=de9d5b1064656ed6, processorArchitecture=MSIL">
+    <Reference Include="CUBRID.Data, Version=9.2.0.0, Culture=neutral, PublicKeyToken=de9d5b1064656ed6, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Src\bin\Release\CUBRID.Data.dll</HintPath>
     </Reference>
