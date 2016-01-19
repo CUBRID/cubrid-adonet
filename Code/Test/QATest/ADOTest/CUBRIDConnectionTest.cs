@@ -232,7 +232,7 @@ namespace ADOTest
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
-                    //Assert.AreEqual("Failed to connect to database server, 'another', on the following host(s): localhost:localhost", ex.Message);
+                    Assert.AreEqual("Failed to connect to database server, 'another', on the following host(s): localhost:localhost", ex.Message);
                     LogStepPass();
                 }
                 finally
@@ -869,7 +869,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
 
                 LogTestStep("set encoding and execute a sql in this encoding, then verify the encoding value");
-                conn.SetEncoding("utf-8");
+                conn.SetEncoding("cp1252");
                 conn.Open();
 
                 DBHelper.ExecuteSQL("drop table if exists t", conn);
@@ -887,7 +887,7 @@ namespace ADOTest
                         Assert.AreEqual("中文", reader.GetString(1));
                     }
                 }
-                Assert.AreEqual(Encoding.GetEncoding("gbk"), conn.GetEncoding());
+                Assert.AreEqual(Encoding.GetEncoding("Windows-1252"), conn.GetEncoding());
                 LogStepPass();
 
                 LogTestStep("test the other encodings");
@@ -933,12 +933,25 @@ namespace ADOTest
 
                 DBHelper.ExecuteSQL("drop table if exists t", conn);
                 conn.SetAutoCommit(false);
+                conn.SetIsolationLevel(CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
+                Assert.AreEqual(CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE, conn.GetIsolationLevel());
 
                 tablesCount = (int)DBHelper.GetSingleValue(sqlTablesCount, conn);
                 DBHelper.ExecuteSQL("create table t(id int)", conn);
                 newTableCount = (int)DBHelper.GetSingleValue(sqlTablesCount, conn);
                 //Verify table was created
                 Assert.AreEqual(tablesCount + 1, newTableCount);
+
+                using (CUBRIDConnection conn2 = new CUBRIDConnection())
+                {
+                    conn2.ConnectionString = DBHelper.connString;
+                    conn2.Open();
+                    conn2.SetIsolationLevel(CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
+                    newTableCount = (int)DBHelper.GetSingleValue(sqlTablesCount, conn2);
+                    //CREATE TABLE is visible from another connection
+                    //dirty read
+                    Assert.AreEqual(tablesCount+1, newTableCount);
+                }
 
                 conn.Commit();
                 newTableCount = (int)DBHelper.GetSingleValue(sqlTablesCount, conn);

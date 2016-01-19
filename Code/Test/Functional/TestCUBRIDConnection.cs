@@ -34,7 +34,7 @@ namespace Test.Functional
 
         Debug.Assert(cs.Database == "demodb");
         Debug.Assert(cs.Port == "33000");
-        Debug.Assert(cs.AutoCommit=="0"); // wrong!
+        Debug.Assert(cs.AutoCommit=="false");
         Debug.Assert(cs.Password=="123456");
         Debug.Assert(cs.User=="admin");
         Debug.Assert(cs.Server=="test-db-server");

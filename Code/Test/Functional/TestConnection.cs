@@ -219,12 +219,12 @@ namespace Test.Functional
         Debug.Assert(conn.ConnectionTimeout == 30);
         Debug.Assert(conn.CurrentDatabase() == "demodb");
         Debug.Assert(conn.Database == "demodb");
-        Debug.Assert(conn.DbVersion.StartsWith("") == true);
+        Debug.Assert(conn.DbVersion.StartsWith("9.3.0") == true);
         Debug.Assert(conn.DataSource == "test-db-server");
         Debug.Assert(conn.AutoCommit == true);
-        Debug.Assert(conn.LockTimeout == -1);
+        Debug.Assert(conn.LockTimeout == 30000);
         Debug.Assert(conn.ConnectionTimeout == 30);
-        Debug.Assert(conn.IsolationLevel == CUBRIDIsolationLevel.TRAN_DEFAULT_ISOLATION);
+        Debug.Assert(conn.IsolationLevel == CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
         Debug.Assert(conn.ServerVersion == "");
         Debug.Assert(conn.State == ConnectionState.Open);
       }
@@ -303,7 +303,7 @@ namespace Test.Functional
           tablesCount = (int)cmd.ExecuteScalar();
         }
 
-        Debug.Assert(tablesCount == 12);
+        Debug.Assert(tablesCount == 10);
 
         conn.Close();
 

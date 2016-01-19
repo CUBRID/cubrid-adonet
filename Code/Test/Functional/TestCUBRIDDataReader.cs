@@ -299,7 +299,7 @@ namespace Test.Functional
                     Debug.Assert(by == (byte)0);
                     Debug.Assert(reader.GetByte(15) == (byte)0);
                     t = reader.GetColumnType(15);
-                    Debug.Assert(reader.GetString(16) == "123456789.0000000000000000");
+                    Debug.Assert(reader.GetString(16) == "123456789");
                     t = reader.GetColumnType(16);
                     char[] buffer = new char[16];
                     reader.GetChars(16, 0, buffer, 0, 16);

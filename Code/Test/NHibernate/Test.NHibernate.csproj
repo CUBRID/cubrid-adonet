@@ -33,9 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NHibernate">
-      <HintPath>NHibernate\NHibernate.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -63,6 +60,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\NHibernate\src\NHibernate\NHibernate.csproj">
+      <Project>{5909bfe7-93cf-4e5f-be22-6293368af01d}</Project>
+      <Name>NHibernate</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Src\CUBRID.Data.CUBRIDClient.csproj">
       <Project>{e2640c6c-f055-4f2b-b1eb-e4ac1c9522bc}</Project>
       <Name>CUBRID.Data.CUBRIDClient</Name>

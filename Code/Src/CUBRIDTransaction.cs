@@ -41,7 +41,7 @@ namespace CUBRID.Data.CUBRIDClient
   public sealed class CUBRIDTransaction : DbTransaction
   {
     private readonly CUBRIDConnection conn;
-    private const CUBRIDIsolationLevel isolationLevel = CUBRIDIsolationLevel.TRAN_DEFAULT_ISOLATION;
+    private const CUBRIDIsolationLevel isolationLevel = CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE;
     private bool open;
 
     /// <summary>
@@ -96,9 +96,13 @@ namespace CUBRID.Data.CUBRIDClient
       {
         switch (isolationLevel)
         {
-          case CUBRIDIsolationLevel.TRAN_READ_COMMITTED:
+          case CUBRIDIsolationLevel.TRAN_COMMIT_CLASS_COMMIT_INSTANCE:
             return IsolationLevel.ReadCommitted;
-          case CUBRIDIsolationLevel.TRAN_REPEATABLE_READ:
+          case CUBRIDIsolationLevel.TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE:
+            return IsolationLevel.ReadUncommitted;
+          case CUBRIDIsolationLevel.TRAN_REP_CLASS_COMMIT_INSTANCE:
+            return IsolationLevel.RepeatableRead;
+          case CUBRIDIsolationLevel.TRAN_REP_CLASS_REP_INSTANCE:
             return IsolationLevel.RepeatableRead;
           case CUBRIDIsolationLevel.TRAN_SERIALIZABLE:
             return IsolationLevel.Serializable;

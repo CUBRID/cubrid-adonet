@@ -133,8 +133,8 @@ namespace Test.Functional
 
         TestCases.ExecuteSQL("drop table if exists isol", conn);
 
-        conn.SetIsolationLevel(CUBRIDIsolationLevel.TRAN_REP_READ);
-        Debug.Assert(conn.GetIsolationLevel() == CUBRIDIsolationLevel.TRAN_REP_READ);
+        conn.SetIsolationLevel(CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
+        Debug.Assert(conn.GetIsolationLevel() == CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
 
         tablesCount = (int)TestCases.GetSingleValue(sqlTablesCount, conn);
         TestCases.ExecuteSQL("create table isol(id int)", conn);

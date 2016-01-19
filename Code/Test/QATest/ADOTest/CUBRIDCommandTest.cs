@@ -492,8 +492,8 @@ namespace ADOTest
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsPrimaryKey, true);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsForeignKey, false);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsNullable, false);
-                Assert.AreEqual(cmdClone.ColumnInfos[0].RealName, "t");
-                Assert.AreEqual(cmdClone.ColumnInfos[0].Precision, 10);
+                Assert.AreEqual(cmdClone.ColumnInfos[0].RealName, "");
+                Assert.AreEqual(cmdClone.ColumnInfos[0].Precision, 8);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].Scale, 0);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsAutoIncrement, false);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsReverseIndex, false);

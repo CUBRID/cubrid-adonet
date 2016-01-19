@@ -52,6 +52,7 @@ namespace CUBRID.Data.Test.UI
 			// 
             this.conn.ConnectionString = "server=test-db-server;database=demodb;port=33000;user=public;password=";
 			this.conn.DbVersion = "";
+			this.conn.SessionId = 0;
 			// 
 			// cmdStadium
 			// 

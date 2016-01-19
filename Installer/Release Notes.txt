@@ -1,11 +1,12 @@
 Release Notes
 ================================================================================
-April 2014 - Update for release 10.0.0
+January 2013 - Update for release 8.4.4
 
 CUBRID ADO.NET Data Provider
-Version: 10.0.0.0001
-CUBRID engine compatible: 10.0.0
+Version: 8.4.4.0003
+CUBRID engine compatible: 8.4.4
 Online Wiki: http://www.cubrid.org/wiki_apis/entry/cubrid-ado-net-driver
+JIRA issues: http://www.jira.cubrid.org/browse/APIS/component/10404
 ================================================================================
 
 Thank you!

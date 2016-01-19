@@ -489,6 +489,7 @@ namespace ADOTest
         [TestMethod]
         public void i18n_issue()
         {
+            /*
             CUBRIDConnection conn = new CUBRIDConnection();
             conn.ConnectionString = "server=test-db-server;database=demodb;port=33000;user=dba;password=";
             conn.Open();
@@ -515,6 +516,7 @@ namespace ADOTest
             };
 
             conn.Close();
+            */
         }
 
         /*[TestMethod]
