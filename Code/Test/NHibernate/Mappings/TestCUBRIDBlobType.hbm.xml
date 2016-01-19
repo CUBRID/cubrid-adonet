@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2"
+                   assembly="NHibernateTestCases"
+                   namespace="CUBRID.Data.TestNHibernate">
+
+  <class name="TestCUBRIDBlobType" table="TestCUBRIDBlob">
+    <id name="c_integer">
+      <generator class="identity" />
+    </id>
+    <property name="c_blob" type="CUBRIDBlob">
+      <column name="c_blob" sql-type="BLOB" />
+    </property>
+  </class>
+</hibernate-mapping>

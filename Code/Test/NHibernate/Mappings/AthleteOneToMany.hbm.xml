@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2"
+assembly="NHibernateTestCases"
+namespace="CUBRID.Data.TestNHibernate">
+  <class name="AthleteOneToMany" table="Athlete">
+    <id name="code">
+      <generator class="identity" />
+    </id>
+    <property name="name"/>
+    <property name="gender"/>
+    <property name="nation_code"/>
+    <property name="athlete_event" column="event"/>
+  </class>
+</hibernate-mapping>

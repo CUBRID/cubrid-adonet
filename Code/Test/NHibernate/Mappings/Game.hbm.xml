@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2"
+assembly="NHibernateTestCases"
+namespace="CUBRID.Data.TestNHibernate">
+  <class name="Game">
+    <id name="host_year" >
+      <column name="host_year"/>
+    </id>
+    <property name="medal"/>
+    <property name="game_date"/>
+    <many-to-one name="Event" column="event_code" cascade="all-delete-orphan" lazy="false"/>
+    <many-to-one name="Stadium" column="stadium_code" cascade="all-delete-orphan" lazy="false"/>
+    <many-to-one name="Nation" column="nation_code" cascade="all-delete-orphan" lazy="false"/>
+    <many-to-one name="Athlete" column="athlete_code" cascade="all-delete-orphan" lazy="false"/>
+  </class>
+</hibernate-mapping>

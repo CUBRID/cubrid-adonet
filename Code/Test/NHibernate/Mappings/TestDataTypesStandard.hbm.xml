@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" 
+                   assembly="NHibernateTestCases" 
+                   namespace="CUBRID.Data.TestNHibernate">
+ 
+  <class name="TestDataTypesStandard" table="TestDataTypesStandard">
+    <id name="c_integer">
+      <column name="c_integer"/>
+    </id>
+    <property name="c_smallint" />
+    <property name="c_bigint" />
+    <property name="c_numeric" >
+      <column name="c_numeric" sql-type="NUMERIC(10,2)" />
+    </property>
+    <property name="c_float" />
+    <property name="c_decimal" >
+      <column name="c_decimal" sql-type="DECIMAL(19,5)" />
+    </property>
+    <property name="c_double" />
+    <property name="c_char" >
+      <column name="c_char" sql-type="CHAR(1)" />
+    </property>
+    <property name="c_varchar" />
+    <property name="c_time" >
+      <column name="c_time" sql-type="TIME" />
+    </property>
+    <property name="c_date" >
+      <column name="c_date" sql-type="DATE" />
+    </property>
+    <property name="c_timestamp" >
+      <column name="c_timestamp" sql-type="TIMESTAMP" />
+    </property>
+    <property name="c_datetime" >
+      <column name="c_datetime" sql-type="DATETIME" />
+    </property>
+    <property name="c_monetary" >
+      <column name="c_monetary" sql-type="MONETARY" />
+    </property>
+    <property name="c_string" >
+      <column name="c_string" sql-type="STRING" />
+    </property>
+    <property name="c_bit" >
+      <column name="c_bit" sql-type="BIT(1)" />
+    </property>
+    <property name="c_varbit" >
+      <column name="c_varbit" sql-type="BIT VARYING(1)" />
+    </property>
+  </class>
+</hibernate-mapping>
