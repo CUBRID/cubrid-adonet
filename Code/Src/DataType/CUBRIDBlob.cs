@@ -37,8 +37,20 @@ namespace CUBRID.Data.CUBRIDClient
   /// </summary>
   public class CUBRIDBlob
   {
+    private const int CLOB_MAX_IO_LENGTH = 128 * 1024;
     private readonly CUBRIDConnection connection;
-    IntPtr packedLobHandle;
+    private int lobSize;
+    private byte[] packedLobHandle;
+
+    /// <summary>
+    ///   Initializes a new instance of the <see cref="CUBRIDBlob" /> class.
+    /// </summary>
+    public CUBRIDBlob()
+    {
+      lobSize = 0;
+      connection = null;
+      packedLobHandle = null;
+    }
 
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDBlob" /> class.
@@ -47,24 +59,23 @@ namespace CUBRID.Data.CUBRIDClient
     public CUBRIDBlob(CUBRIDConnection conn)
     {
       connection = conn;
+
       packedLobHandle = connection.LOBNew(CUBRIDDataType.CCI_U_TYPE_BLOB);
+      InitBlob(packedLobHandle);
     }
 
-    /// <summary>
-    ///   Destructors of the <see cref="CUBRIDBlob" /> class.
-    /// </summary>
-    ~CUBRIDBlob()
-    {
-        CciInterface.cci_blob_free(packedLobHandle);
-    }
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDBlob" /> class.
     /// </summary>
     /// <param name="responseBuffer"> The response buffer. </param>
+    /// <param name="readCursor"> The read cursor. </param>
+    /// <param name="size"> The size. </param>
     /// <param name="conn"> The connection </param>
-    public CUBRIDBlob(IntPtr responseBuffer, CUBRIDConnection conn)
+    public CUBRIDBlob(byte[] responseBuffer, int readCursor, int size, CUBRIDConnection conn)
     {
-      packedLobHandle = responseBuffer;
+      byte[] packedLobHandleBuffer = new byte[size];
+      Array.Copy(responseBuffer, readCursor, packedLobHandleBuffer, 0, size);
+      InitBlob(packedLobHandleBuffer);
       connection = conn;
     }
 
@@ -74,9 +85,34 @@ namespace CUBRID.Data.CUBRIDClient
     /// <value> The length of the BLOB. </value>
     public long BlobLength
     {
-      get 
-      { 
-          return (long)CciInterface.cci_blob_size(packedLobHandle);
+      get { return lobSize; }
+      set
+      {
+        int bitpos = 64;
+        const int pos = 4;
+        for (int i = pos; i < pos + 8; i++)
+        {
+          bitpos -= 8;
+          packedLobHandle[i] = (byte)((value >> bitpos) & 0xFF);
+        }
+      }
+    }
+
+    /// <summary>
+    ///   Gets the LOB content as bytes array.
+    /// </summary>
+    /// <param name="packedLobHandleBuffer"> Buffer containing a packedLobHandle. </param>
+    private void InitBlob(byte[] packedLobHandleBuffer)
+    {
+      packedLobHandle = packedLobHandleBuffer;
+      int pos = 0;
+      pos += 4;
+
+      lobSize = 0;
+      for (int i = pos; i < pos + 8; i++)
+      {
+        lobSize <<= 8;
+        lobSize |= (packedLobHandle[i] & 0xff);
       }
     }
 
@@ -88,22 +124,41 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> A buffer containing the requested data </returns>
     public byte[] GetBytes(long pos, int length)
     {
-      ulong lob_size = CciInterface.cci_blob_size(packedLobHandle);
-      if(lob_size<0)
+      using (CUBRIDConnection con = new CUBRIDConnection())
       {
-          throw new CUBRIDException("Get lob size failed.");
-      }
-      pos--;
-      lob_size = (lob_size - (ulong)pos < (ulong)length) ? lob_size - (ulong)pos : (ulong)length;
+        con.ConnectionString = connection.ConnectionString;
+        con.Open();
+        pos--;
+        int totalReadLen = 0;
 
-      byte[] buf = new byte[lob_size];
-      T_CCI_ERROR err = new T_CCI_ERROR();
-      int res = CciInterface.cci_blob_read(connection.Conection,packedLobHandle,(ulong)pos,(int)lob_size, buf,ref err);
-      if (res < 0)
-      {
-          throw new CUBRIDException(err.err_code, err.err_msg);
+        if ((pos + length) > BlobLength)
+        {
+          length = (int)(BlobLength - pos);
+        }
+
+        if (length <= 0)
+          return new byte[0];
+
+        byte[] buff = new byte[length];
+        while (length > 0)
+        {
+          int readLen = Math.Min(length, CLOB_MAX_IO_LENGTH);
+          int realReadLen = con.LOBRead(packedLobHandle, pos, buff, totalReadLen, readLen);
+
+          pos += realReadLen;
+          length -= realReadLen;
+          totalReadLen += realReadLen;
+
+          if (realReadLen == 0)
+          {
+            break;
+          }
+        }
+
+        con.Close();
+
+        return totalReadLen >= buff.Length ? buff : new byte[0];
       }
-      return buf;
     }
 
     /// <summary>
@@ -112,29 +167,43 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="pos"> The position. </param>
     /// <param name="bytes"> The bytes array. </param>
     /// <returns> The number of written bytes </returns>
-    public long SetBytes(ulong pos, byte[] bytes)
+    public long SetBytes(long pos, byte[] bytes)
     {
       int len = bytes.Length;
-      T_CCI_ERROR err = new T_CCI_ERROR();
+      int offset = 0;
+
+      if (BlobLength + 1 != pos)
+        throw new CUBRIDException(Utils.GetStr(MsgId.InvalidLOBPosition));
 
       pos--;
 
-      int res  = CciInterface.cci_blob_write(
-          connection.Conection, packedLobHandle,
-          pos, bytes.GetLength(0), bytes, ref err);
-      if (res < 0)
+      long totalWriteLen = 0;
+
+      while (len > 0)
       {
-          throw new CUBRIDException(err.err_code, err.err_msg);
+        int writeLen = Math.Min(len, CLOB_MAX_IO_LENGTH);
+        int realWriteLen = connection.LOBWrite(packedLobHandle, pos, bytes, offset, writeLen);
+
+        pos += realWriteLen;
+        len -= realWriteLen;
+        offset += realWriteLen;
+        totalWriteLen += realWriteLen;
       }
 
-      return res;
+      if (pos > BlobLength)
+      {
+        lobSize = (int)pos;
+        BlobLength = lobSize;
+      }
+
+      return totalWriteLen;
     }
 
     /// <summary>
     ///   Gets the packed LOB handle.
     /// </summary>
     /// <returns> The packed LOB handle. </returns>
-    public IntPtr GetPackedLobHandle()
+    public byte[] GetPackedLobHandle()
     {
       return packedLobHandle;
     }

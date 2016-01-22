@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {

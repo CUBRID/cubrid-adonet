@@ -25,8 +25,6 @@
     InvalidConnectionPort,
     InvalidConnectionString,
     DBNameIsEmpty,
-    ServerIsEmpty,
-    UserIsEmpty,
     InvalidPropertyName,
     GetBytesCanBeCalledOnlyOnBinaryColumns,
     BufferIndexMustBeValidIndexInBuffer,
@@ -46,14 +44,11 @@
     ArgumentMustBeCUBRIDParameter,
     UnknownIsolationLevelNotSupported,
     ConnectionMustBeValidAndOpenToCommit,
-    ConnectionMustBeValidAndOpenToRollBack,
     TransactionAlreadyCommittedOrNotPending,
     IncorrectNumberOfFilters,
     NoFiltersSpecified,
     ParameterNotFoundMissingPrefix,
     collectionNameIsNull,
-    ConnectionStringIsNULL,
-    ConnectFailed,
   }
 
   internal class Messages

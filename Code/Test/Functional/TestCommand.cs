@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -23,19 +23,6 @@ namespace Test.Functional
 
         String sql = "select * from nation";
         CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
-        CUBRIDCommand cmd2 = cmd.Clone();
-
-        try
-        {
-            cmd.Cancel();
-        }
-        catch (Exception e)
-        {
-            string r = "System.NotSupportedException: Specified method is not supported";
-            Debug.Assert(e.Message.Substring(0,r.Length) == r);
-        }
-
-        Debug.Assert(cmd.CommandType == cmd2.CommandType);
         CUBRIDDataAdapter da = new CUBRIDDataAdapter();
         da.SelectCommand = cmd;
         DataTable dt = new DataTable("");

@@ -55,8 +55,8 @@ namespace CUBRID.Data.CUBRIDClient
     private bool paramSourceColumnNullMapping = true;
     private DataRowVersion paramSourceVersion = DataRowVersion.Current;
     private object paramValue;
-    private Encoding parameterEncoding = null;
-    private int pos = 0;
+    private Encoding parameterEncoding = Encoding.Default;
+
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDParameter" /> class.
     /// </summary>
@@ -273,6 +273,81 @@ namespace CUBRID.Data.CUBRIDClient
       }
     }
 
+    
+    private void SetInnerCUBRIDDataType(object[] oArray)
+    {
+      if (oArray == null || paramValue == DBNull.Value)
+      {
+        innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_NULL;
+        return;
+      }
+
+      if (oArray is TimeSpan)
+      {
+        DbType = DbType.UInt64;
+        innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_BIGINT;
+
+        return;
+      }
+
+      TypeCode typeCode = Type.GetTypeCode(oArray[0].GetType());
+      switch (typeCode)
+      {
+        case TypeCode.Boolean:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_SHORT;
+          break;
+        case TypeCode.SByte:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_SHORT;
+          break;
+        case TypeCode.Byte:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_SHORT;
+          break;
+        case TypeCode.Int16:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_SHORT;
+          break;
+        case TypeCode.UInt16:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_SHORT;
+          break;
+        case TypeCode.Int32:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_INT;
+          break;
+        case TypeCode.UInt32:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_INT;
+          break;
+        case TypeCode.Int64:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_BIGINT;
+          break;
+        case TypeCode.UInt64:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_BIGINT;
+          break;
+        case TypeCode.DateTime:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_DATETIME;
+          break;
+        case TypeCode.String:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_STRING;
+          break;
+        case TypeCode.Single:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_FLOAT;
+          break;
+        case TypeCode.Double:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_DOUBLE;
+          break;
+        case TypeCode.Decimal:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_NUMERIC;
+          break;
+        case TypeCode.Object:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_OBJECT;
+          break;
+        case TypeCode.DBNull:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_NULL;
+          break;
+        default:
+          innerCUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_OBJECT;
+          break;
+      }
+    }
+    
+
     /// <summary>
     ///   Gets or sets a value that indicates whether the parameter is input-only, output-only, bidirectional, or a stored procedure return value parameter.
     /// </summary>
@@ -284,16 +359,6 @@ namespace CUBRID.Data.CUBRIDClient
     {
       get { return paramDirection; }
       set { paramDirection = value; }
-    }
-
-    /// <summary>
-    ///   Gets or sets the pos of parameter
-    /// </summary>
-    /// <returns> The pos of parameter. </returns>
-    public  int Pos
-    {
-        get { return pos; }
-        set { pos = value; }
     }
 
     /// <summary>
@@ -644,6 +709,137 @@ namespace CUBRID.Data.CUBRIDClient
           break;
       }
     }
+
+    /// <summary>
+    ///   Writes the data to the stream.
+    /// </summary>
+    /// <param name="stream"> The stream. </param>
+    internal void Write(CUBRIDStream stream)
+    {
+      if (paramValue == null || paramValue is DBNull)
+      {
+        stream.WriteByteArg((byte)CUBRIDDataType.CCI_U_TYPE_NULL);
+        stream.WriteNullArg();
+      }
+      else
+      {
+        stream.WriteByteArg((byte)paramCUBRIDDataType);
+
+        switch (paramCUBRIDDataType)
+        {
+          case CUBRIDDataType.CCI_U_TYPE_NULL:
+            stream.WriteNullArg();
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_CHAR:
+          case CUBRIDDataType.CCI_U_TYPE_NCHAR:
+          case CUBRIDDataType.CCI_U_TYPE_STRING:
+          case CUBRIDDataType.CCI_U_TYPE_VARNCHAR:
+          case CUBRIDDataType.CCI_U_TYPE_ENUM:
+            stream.WriteStringArg(paramValue.ToString(), parameterEncoding);
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_SHORT:
+            stream.WriteShortArg(Convert.ToInt16(paramValue));
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_INT:
+            stream.WriteIntArg((int)paramValue);
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_BIGINT:
+            stream.WriteLongArg(Convert.ToInt64(paramValue));
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_FLOAT:
+            stream.WriteFloatArg((float)Convert.ToDouble(paramValue));
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_DOUBLE:
+          case CUBRIDDataType.CCI_U_TYPE_MONETARY:
+            stream.WriteDoubleArg(Convert.ToDouble(paramValue));
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_DATE:
+            stream.WriteDateArg((DateTime)paramValue);
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_TIME:
+            stream.WriteTimeArg((DateTime)paramValue);
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_DATETIME:
+            stream.WriteDateTimeArg((DateTime)paramValue);
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_TIMESTAMP:
+            stream.WriteTimeStampArg((DateTime)paramValue);
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_SET:
+          case CUBRIDDataType.CCI_U_TYPE_MULTISET:
+          case CUBRIDDataType.CCI_U_TYPE_SEQUENCE:
+            {
+              object[] oArray;
+              Array array = paramValue as Array;
+              if (array != null)
+              {
+                if ((array.GetValue(0) as Array) == null)
+                {
+                  oArray = new object[array.Length];
+                  array.CopyTo(oArray, 0);
+                }
+                else
+                {
+                  throw new NotImplementedException();
+                }
+              }
+              else
+              {
+                oArray = new object[1];
+                oArray[0] = paramValue;
+              }
+              if (innerCUBRIDDataType == CUBRIDDataType.CCI_U_TYPE_FIRST)
+              {
+                SetInnerCUBRIDDataType(oArray);
+              }
+              stream.WriteCollection(oArray, innerCUBRIDDataType);
+            }
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_BIT:
+          case CUBRIDDataType.CCI_U_TYPE_VARBIT:
+            byte[] valueAsByte = paramValue as byte[];
+            if (valueAsByte != null && valueAsByte.Length > 1)
+            {
+              stream.WriteBytesArg((byte[])paramValue);
+            }
+            else
+            {
+              stream.WriteByteArg(Convert.ToByte(paramValue));
+            }
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_NUMERIC:
+            //INFO NUMERIC(=DECIMAL=DEC) is sent as null-terminated string value
+            stream.WriteStringArg(Convert.ToDecimal(paramValue).ToString(CultureInfo.InvariantCulture), Encoding.Default);
+            // Added convertion and culture info.
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_BLOB:
+            stream.WriteBlob((CUBRIDBlob)paramValue);
+            break;
+
+          case CUBRIDDataType.CCI_U_TYPE_CLOB:
+            stream.WriteClob((CUBRIDClob)paramValue);
+            break;
+
+          default:
+            throw new Exception(Utils.GetStr(MsgId.DontKnowHowToWriteParameter));
+        }
+      }
+    }
+
     /// <summary>
     ///   Sets the parameter's encoding property.
     /// </summary>

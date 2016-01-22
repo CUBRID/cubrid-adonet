@@ -4,7 +4,7 @@
     <property name="connection.provider">NHibernate.Connection.DriverConnectionProvider</property>
     <property name="dialect">NHibernate.Dialect.CUBRIDDialect</property>
     <property name="connection.driver_class">NHibernate.Driver.CUBRIDDriver</property>
-    <property name="connection.connection_string">server=test-db-server;database=demodb;port=33000;user=public;password=</property>
+    <property name="connection.connection_string">server=localhost;database=demodb;port=33000;user=public;password=</property>
 
     <property name="show_sql">false</property>
   </session-factory>

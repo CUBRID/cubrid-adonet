@@ -33,7 +33,6 @@ using System.Collections;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace CUBRID.Data.CUBRIDClient
 {
@@ -42,10 +41,10 @@ namespace CUBRID.Data.CUBRIDClient
   /// </summary>
   public sealed class CUBRIDDataReader : DbDataReader, IDataRecord
   {
-    private  ColumnMetaData[] columnMetaData;
-    private  int resultCount; //Resultset rows count; Equivalent to SELECT COUNT(*)...
-    private  ResultTuple resultTuple;
-    private CommandBehavior CommandBehavior; //TODO Add support
+    private readonly ColumnMetaData[] columnMetaData;
+    private readonly int resultCount; //Resultset rows count; Equivalent to SELECT COUNT(*)...
+    private readonly ResultTuple resultTuple;
+    private CommandBehavior commandBehavior; //TODO Add support
     private CUBRIDConnection conn;
     private int currentRow;
     internal int handle;
@@ -55,46 +54,7 @@ namespace CUBRID.Data.CUBRIDClient
     private CUBRIDCommand stmt;
     private int tupleCount; //Actually retrieved number of records in the pack; always <= resultCount
     private const int visibleFieldCount = 1; //TODO Add support
-    private Dictionary<CUBRIDDataType, string> ColumnTypeName;
 
-    /// <summary>
-    ///  commandBehavior <see cref="T:System.Data.Common.DbDataReader" /> contains one or more rows.
-    /// </summary>
-    public CommandBehavior commandBehavior
-    {
-        get { return CommandBehavior; }
-        set { CommandBehavior = value; }
-    }
-    private void InitColumnTypeName()
-    {
-        ColumnTypeName =
-          new Dictionary<CUBRIDDataType, string>();
-
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_CHAR, "CHAR");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_NCHAR, "NCHAR");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_STRING, "STRING");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_VARNCHAR, "VARCHAR");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_SHORT, "SHORT");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_INT, "INT");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_FLOAT, "FLOAT");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_DOUBLE, "DOUBLE");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_MONETARY, "MONETARY");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_NUMERIC, "NUMERIC");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_DATETIME, "DATETIME");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_DATE, "DATE");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_TIME, "TIME");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_TIMESTAMP, "TIMESTAMP");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_OBJECT, "OBJECT");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_BIT, "BIT");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_VARBIT, "VARBIT");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_SET, "SET");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_MULTISET, "MULTISET");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_SEQUENCE, "SEQUENCE");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_BLOB, "BLOB");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_CLOB, "CLOB");
-        ColumnTypeName.Add(CUBRIDDataType.CCI_U_TYPE_ENUM, "ENUM");
-    }
-    /*
     internal CUBRIDDataReader(CUBRIDCommand stmt, int handle, int count, ColumnMetaData[] columnInfos)
     {
       this.stmt = stmt;
@@ -105,9 +65,8 @@ namespace CUBRID.Data.CUBRIDClient
       currentRow = 0;
       resultTuple = new ResultTuple(columnInfos.Length);
       commandBehavior = CommandBehavior.Default;
-      InitColumnTypeName();
     }
-    */
+
     internal CUBRIDDataReader(CUBRIDCommand stmt, int handle, int count, ColumnMetaData[] columnInfos, int tupleCount)
     {
       this.stmt = stmt;
@@ -119,7 +78,6 @@ namespace CUBRID.Data.CUBRIDClient
       this.tupleCount = tupleCount;
       resultTuple = new ResultTuple(columnInfos.Length);
       commandBehavior = CommandBehavior.Default;
-      InitColumnTypeName();
     }
 
     /// <summary>
@@ -226,21 +184,18 @@ namespace CUBRID.Data.CUBRIDClient
 
       try
       {
-          if (shouldCloseConnection)
-          {
-              conn.Close();
-          }
-          stmt.Close();
+        if (shouldCloseConnection)
+        {
+          conn.Close();
+        }
+        stmt.Close();
+        stmt = null;
+        conn = null;
+        isClosed = true;
       }
       catch
       {
-          //Do not propagate exceptions
-      }
-      finally
-      {
-          stmt = null;
-          conn = null;
-          isClosed = true;
+        //Do not propagate exceptions
       }
     }
 
@@ -251,10 +206,6 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override bool GetBoolean(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
       return Convert.ToBoolean(GetObject(ordinal));
     }
 
@@ -265,13 +216,9 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override byte GetByte(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        //byte[] b = (byte[])GetObject(ordinal);
+      byte[] b = (byte[])GetObject(ordinal);
 
-        return Convert.ToByte(GetObject(ordinal));
+      return Convert.ToByte(b[0]);
     }
 
     /// <summary>
@@ -289,11 +236,6 @@ namespace CUBRID.Data.CUBRIDClient
       // [APIS-217] Check the index is correct.
       if (ordinal >= FieldCount || ordinal < 0)
         throw new IndexOutOfRangeException();
-
-      if (currentRow > resultCount) //Are we at the end of the data?
-      {
-          throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-      }
 
       object val = GetValue(ordinal);
       string type = GetColumnTypeName(ordinal);
@@ -363,11 +305,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override char GetChar(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToChar(GetObject(ordinal));
+      return Convert.ToChar(GetObject(ordinal));
     }
 
     /// <summary>
@@ -382,10 +320,6 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The actual number of characters read. </returns>
     public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
       if (ordinal >= FieldCount)
         throw new IndexOutOfRangeException();
 
@@ -435,11 +369,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override DateTime GetDateTime(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToDateTime(GetObject(ordinal));
+      return Convert.ToDateTime(GetObject(ordinal));
     }
 
     /// <summary>
@@ -449,11 +379,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override decimal GetDecimal(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToDecimal(GetObject(ordinal));
+      return Convert.ToDecimal(GetObject(ordinal));
     }
 
     /// <summary>
@@ -463,11 +389,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override double GetDouble(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToDouble(GetObject(ordinal));
+      return Convert.ToDouble(GetObject(ordinal));
     }
 
     /// <summary>
@@ -477,11 +399,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override float GetFloat(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToSingle(GetObject(ordinal));
+      return Convert.ToSingle(GetObject(ordinal));
     }
 
     /// <summary>
@@ -522,11 +440,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override short GetInt16(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToInt16(GetObject(ordinal));
+      return Convert.ToInt16(GetObject(ordinal));
     }
 
     /// <summary>
@@ -536,11 +450,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override int GetInt32(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToInt32(GetObject(ordinal));
+      return Convert.ToInt32(GetObject(ordinal));
     }
 
     /// <summary>
@@ -550,13 +460,9 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override long GetInt64(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        GetObject(ordinal);
+      GetObject(ordinal);
 
-        return Convert.ToInt64(GetObject(ordinal));
+      return Convert.ToInt64(GetObject(ordinal));
     }
 
     /// <summary>
@@ -602,11 +508,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> The value of the specified column. </returns>
     public override string GetString(int ordinal)
     {
-        if (currentRow > resultCount) //Are we at the end of the data?
-        {
-            throw new InvalidOperationException(Utils.GetStr(MsgId.BufferIndexMustBeValidIndexInBuffer));
-        }
-        return Convert.ToString(GetObject(ordinal));
+      return Convert.ToString(GetObject(ordinal));
     }
 
     /// <summary>
@@ -685,10 +587,10 @@ namespace CUBRID.Data.CUBRIDClient
         row["ColumnOrdinal"] = i + 1;
         row["ColumnSize"] = columnMetadata.Precision;
         int precision = columnMetadata.Precision;
-        if (precision != -1 && Int16.MaxValue > precision)
+        if (precision != -1)
           row["NumericPrecision"] = Convert.ToInt16(precision);
         int scale = columnMetadata.Scale;
-        if (scale != -1 && Int16.MaxValue > scale)
+        if (scale != -1)
           row["NumericScale"] = Convert.ToInt16(scale);
 
         row["DataType"] = GetFieldType(i);
@@ -781,53 +683,16 @@ namespace CUBRID.Data.CUBRIDClient
         throw new CUBRIDException(Utils.GetStr(MsgId.InvalidAttemptToReadDataWhenReaderNotOpen));
       }
 
-      T_CCI_ERROR err = new T_CCI_ERROR();
       bool bRet = false;
-      resultCount = CciInterface.cci_next_result(handle, ref err);
-      if (resultCount >= 0)
+      try
       {
-          columnMetaData = CciInterface.cci_get_result_info(handle);
-          currentRow = 0;
-          resultTuple = new ResultTuple(columnMetaData.Length);
-          commandBehavior = CommandBehavior.Default;
-          bRet = true;
+        bRet = (conn.Stream.RequestNextResult(handle) > 0);
       }
+      catch { }
 
       return bRet;
     }
 
-    internal T_CCI_ERROR_CODE ReadResultTuple()
-	{
-	  resultTuple.Index = currentRow-1;
-	  resultTuple.Oid = null;
-	  T_CCI_ERROR err = new T_CCI_ERROR();
-
-	  int res = CciInterface.cci_cursor(handle, 1, CCICursorPosition.CCI_CURSOR_CURRENT, ref err);
-	  if (res == (int)T_CCI_ERROR_CODE.CCI_ER_NO_MORE_DATA)
-	  {
-          return T_CCI_ERROR_CODE.CCI_ER_NO_MORE_DATA;
-	  }
-	  if (res < 0)
-	  {
-	    throw new CUBRIDException(err.err_msg);
-	  }
-
-	  if ((res = CciInterface.cci_fetch(handle, ref err)) < 0)
-	  {
-	    throw new CUBRIDException(err.err_msg);
-	  }
-
-	  for (int i = 1; i <= columnMetaData.Length; i++)
-	  {
-	    res = CciInterface.cci_get_data(resultTuple, handle, i, (int)columnMetaData[i-1].Type,conn);
-        if (columnMetaData[i - 1].Name == null)
-        {
-            columnMetaData[i - 1].Name = i.ToString();
-        }
-	    resultTuple[columnMetaData[i - 1].Name] = resultTuple[i - 1];
-	  }
-      return T_CCI_ERROR_CODE.CCI_ER_NO_ERROR;
-	}
     /// <summary>
     ///   Advances the reader to the next record in a result set.
     /// </summary>
@@ -839,25 +704,70 @@ namespace CUBRID.Data.CUBRIDClient
 
       currentRow++;
 
-      if (commandBehavior == CommandBehavior.SingleRow && currentRow>1 )
-      {
-          return false;
-      }
       if (currentRow > resultCount) //Are we at the end of the data?
       {
         return false;
       }
 
       //Save current tuple count (Remember: tuple count is the number of all tuples fetched so far from the server)
-      T_CCI_ERROR_CODE err = ReadResultTuple();
-      if (T_CCI_ERROR_CODE.CCI_ER_NO_ERROR != err)
+      int curr_tupleCount = tupleCount;
+
+      if (currentRow > tupleCount && currentRow < resultCount)
+      //Are we after the last row in the current tuple, but more data is available and needs to be retrieved?
       {
-        return false;
+        Fetch(currentRow - 1);
+
+        //"Health" check
+        if (curr_tupleCount == tupleCount)
+        {
+          //The additional returned tuple count is zero; assume no more data is available
+          return false;
+        }
       }
+
+      conn.Stream.ReadResultTuple(resultTuple, columnMetaData, stmt.StatementType, conn);
+
       return true;
     }
 
     #endregion
+
+    /// <summary>
+    ///   Forced closes the <see cref="CUBRIDDataReader" /> object.
+    /// </summary>
+    internal void ForceClose()
+    {
+      bool shouldCloseConnection = (commandBehavior & CommandBehavior.CloseConnection) != 0;
+      commandBehavior = CommandBehavior.Default;
+
+      //Clear all remaining resultsets
+      try
+      {
+        while (NextResult())
+        {
+        }
+      }
+      catch
+      {
+      }
+
+      try
+      {
+        if (shouldCloseConnection)
+        {
+          conn.Close();
+        }
+        stmt.Close();
+        stmt = null;
+        conn = null;
+        isClosed = true;
+      }
+      catch
+      {
+        //Do not propagate exceptions
+      }
+    }
+
     /// <summary>
     ///   Releases the managed resources used by the <see cref="T:System.Data.Common.DbDataReader" /> and optionally releases the unmanaged resources.
     /// </summary>
@@ -1014,6 +924,19 @@ namespace CUBRID.Data.CUBRIDClient
       return new DbEnumerator(this, (commandBehavior & CommandBehavior.CloseConnection) != 0);
     }
 
+    private void Fetch(int cursor_position = 0)
+    {
+      conn.Stream.RequestFetch(handle, cursor_position);
+
+      //read the number of tuples returned by the server this time
+      int tuplesReturned = conn.Stream.ReadInt();
+
+      if (tuplesReturned < 0)
+        tuplesReturned = 0;
+
+      tupleCount += tuplesReturned;
+    }
+
     /// <summary>
     ///   Gets the object value for the column.
     /// </summary>
@@ -1050,7 +973,81 @@ namespace CUBRID.Data.CUBRIDClient
       if (index < 0 || index >= FieldCount)
         throw new IndexOutOfRangeException();
 
-      return ColumnTypeName[columnMetaData[index].Type];
+      switch (columnMetaData[index].Type)
+      {
+        case CUBRIDDataType.CCI_U_TYPE_CHAR:
+          return "CHAR";
+
+        case CUBRIDDataType.CCI_U_TYPE_NCHAR:
+          return "NCHAR";
+
+        case CUBRIDDataType.CCI_U_TYPE_STRING:
+          return "STRING";
+
+        case CUBRIDDataType.CCI_U_TYPE_VARNCHAR:
+          return "VARCHAR";
+
+        case CUBRIDDataType.CCI_U_TYPE_SHORT:
+          return "SHORT";
+
+        case CUBRIDDataType.CCI_U_TYPE_INT:
+          return "INT";
+
+        case CUBRIDDataType.CCI_U_TYPE_FLOAT:
+          return "FLOAT";
+
+        case CUBRIDDataType.CCI_U_TYPE_DOUBLE:
+          return "DOUBLE";
+
+        case CUBRIDDataType.CCI_U_TYPE_MONETARY:
+          return "MONETARY";
+
+        case CUBRIDDataType.CCI_U_TYPE_NUMERIC:
+          return "NUMERIC";
+
+        // [APIS-219] Added missing CUBRIDDateType:
+        case CUBRIDDataType.CCI_U_TYPE_DATETIME:
+          return "DATETIME";
+
+        case CUBRIDDataType.CCI_U_TYPE_DATE:
+          return "DATE";
+
+        case CUBRIDDataType.CCI_U_TYPE_TIME:
+          return "TIME";
+
+        case CUBRIDDataType.CCI_U_TYPE_TIMESTAMP:
+          return "TIMESTAMP";
+
+        case CUBRIDDataType.CCI_U_TYPE_OBJECT:
+          return "OBJECT";
+
+        case CUBRIDDataType.CCI_U_TYPE_BIT:
+          return "BIT";
+
+        case CUBRIDDataType.CCI_U_TYPE_VARBIT:
+          return "VARBIT";
+
+        case CUBRIDDataType.CCI_U_TYPE_SET:
+          return "SET";
+
+        case CUBRIDDataType.CCI_U_TYPE_MULTISET:
+          return "MULTISET";
+
+        case CUBRIDDataType.CCI_U_TYPE_SEQUENCE:
+          return "SEQUENCE";
+
+        case CUBRIDDataType.CCI_U_TYPE_BLOB:
+          return "BLOB";
+
+        case CUBRIDDataType.CCI_U_TYPE_CLOB:
+          return "CLOB";
+
+        case CUBRIDDataType.CCI_U_TYPE_ENUM:
+          return "ENUM";
+
+        default:
+          return null;
+      }
     }
 
     /// <summary>

@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -13,7 +13,7 @@ namespace Test.Functional
     /// </summary>
     private static void Test_ConnectionStringBuilder()
     {
-        CUBRIDConnectionStringBuilder sb = new CUBRIDConnectionStringBuilder(ip, 33000, "demodb", "public", "",
+      CUBRIDConnectionStringBuilder sb = new CUBRIDConnectionStringBuilder("localhost", 33000, "demodb", "public", "",
                                                                            "utf-8", false);
       //Note: Do not use sb.ConnectionString with empty password
 
@@ -22,7 +22,7 @@ namespace Test.Functional
         conn.Open();
       }
 
-      sb = new CUBRIDConnectionStringBuilder(ip, 33000, "demodb", "public", "wrong password", "utf-8", false);
+      sb = new CUBRIDConnectionStringBuilder("localhost", 33000, "demodb", "public", "wrong password", "utf-8", false);
       using (CUBRIDConnection conn = new CUBRIDConnection(sb.GetConnectionString()))
       {
         try
@@ -31,8 +31,7 @@ namespace Test.Functional
         }
         catch (Exception ex)
         {
-          string r = "Incorrect or missing password.";
-          Debug.Assert(ex.Message.Substring(0,r.Length)== r);
+          Debug.Assert(ex.Message == "Incorrect or missing password.");
         }
       }
 
@@ -46,7 +45,7 @@ namespace Test.Functional
       sb.User = "public";
       sb.Database = "demodb";
       sb.Port = "33000";
-      sb.Server = ip;
+      sb.Server = "localhost";
       using (CUBRIDConnection conn = new CUBRIDConnection(sb.GetConnectionString()))
       {
         conn.Open();
@@ -219,12 +218,12 @@ namespace Test.Functional
         Debug.Assert(conn.ConnectionTimeout == 30);
         Debug.Assert(conn.CurrentDatabase() == "demodb");
         Debug.Assert(conn.Database == "demodb");
-        Debug.Assert(conn.DbVersion.StartsWith("") == true);
-        Debug.Assert(conn.DataSource == "test-db-server");
+        Debug.Assert(conn.DbVersion.StartsWith("9.1.0") == true);
+        Debug.Assert(conn.DataSource == "localhost");
         Debug.Assert(conn.AutoCommit == true);
-        Debug.Assert(conn.LockTimeout == -1);
+        Debug.Assert(conn.LockTimeout == 30000);
         Debug.Assert(conn.ConnectionTimeout == 30);
-        Debug.Assert(conn.IsolationLevel == CUBRIDIsolationLevel.TRAN_DEFAULT_ISOLATION);
+        Debug.Assert(conn.IsolationLevel == CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
         Debug.Assert(conn.ServerVersion == "");
         Debug.Assert(conn.State == ConnectionState.Open);
       }
@@ -235,7 +234,7 @@ namespace Test.Functional
     ///</summary>
     public static void Test_CUBRIDConnectionStringBuilderConstructor()
     {
-      string connString = "server=test-db-server;database=demodb;port=33690;user=public;password=";
+      string connString = "server=localhost;database=demodb;port=33690;user=public;password=";
       CUBRIDConnectionStringBuilder target = new CUBRIDConnectionStringBuilder(connString);
       using (CUBRIDConnection conn = new CUBRIDConnection(target.GetConnectionString()))
       {
@@ -246,7 +245,7 @@ namespace Test.Functional
         }
         catch (Exception ex)
         {
-          //Debug.Assert(ex.Message == "No connection could be made because the target machine actively refused it 127.0.0.1:33690");
+          Debug.Assert(ex.Message == "No connection could be made because the target machine actively refused it 127.0.0.1:33690");
         }
       }
     }
@@ -256,7 +255,7 @@ namespace Test.Functional
     ///</summary>
     public static void Test_GetConnectionString()
     {
-      string server = "test-db-server";
+      string server = "localhost";
       int port = 33690;
       string database = "demodb";
       string user = "public";
@@ -265,7 +264,7 @@ namespace Test.Functional
       CUBRIDConnectionStringBuilder target = new CUBRIDConnectionStringBuilder(server, port, database, user, password,
                                                                                encoding, true);
       string expected =
-        "server=test-db-server;port=33690;database=demodb;user=public;password=;charset=utf-8;autocommit=1";
+        "server=localhost;port=33690;database=demodb;user=public;password=;charset=utf-8;autocommit=1";
       string actual = string.Empty;
       actual = target.GetConnectionString();
       Debug.Assert(expected == actual);
@@ -274,12 +273,12 @@ namespace Test.Functional
       Debug.Assert(target.Encoding == "utf-8");
       Debug.Assert(target.Password == "");
       Debug.Assert(target.Port == "33690");
-      Debug.Assert(target.Server == "test-db-server");
+      Debug.Assert(target.Server == "localhost");
       Debug.Assert(target.User == "public");
       Debug.Assert(target.AutoCommit == "1");
 
-      target.Server = "test-db-server";
-      Debug.Assert(target.Server == "test-db-server");
+      target.Server = "192.168.0.1";
+      Debug.Assert(target.Server == "192.168.0.1");
     }
 
     /// <summary>
@@ -287,10 +286,10 @@ namespace Test.Functional
     ///</summary>
     public static void Test_ConnectionURL_And_Reset()
     {
-      string strURL = "cci:cubrid:test-db-server:33000:demodb:public::?logSlowQueries=true" +
+      string strURL = "cci:cubrid:localhost:33000:demodb:public::?logSlowQueries=true" +
                       "&slowQueryThresholdMillis=1000&logTraceApi=true&logTraceNetwork=true" +
-                      "&autoCommit=false&althosts=" +ip+
-                      "&querytimeout=10000&logintimeout=5000";
+                      "&autoCommit=false&althosts=10.34.64.122,10.34.64.122:33690&" +
+                      "querytimeout=10000&logintimeout=5000";
       using (CUBRIDConnection conn = new CUBRIDConnection())
       {
         conn.ConnectionString = strURL;
@@ -303,20 +302,20 @@ namespace Test.Functional
           tablesCount = (int)cmd.ExecuteScalar();
         }
 
-        Debug.Assert(tablesCount == 12);
+        Debug.Assert(tablesCount == 10);
 
         conn.Close();
 
         try
         {
-            string strURL2 = "cci:cubrid:test-db-server:33690:demodb:public::?logSlowQueries=true" +
+          string strURL2 = "cci:cubrid:localhost:33690:demodb:public::?logSlowQueries=true" +
                            "&slowQueryThresholdMillis=1000&logTraceApi=false&logTraceNetwork=false&autoCommit=false";
           conn.ConnectionString = strURL2;
           conn.Open();
         }
         catch(Exception ex)
         {
-          Debug.Assert(ex.Message == "Cannot connect to CUBRID CAS");
+          Debug.Assert(ex.Message == "No connection could be made because the target machine actively refused it 127.0.0.1:33690");
         }
       }
     }

@@ -30,7 +30,6 @@
 
 using System;
 using System.Data;
-using System.Text;
 using System.Data.Common;
 using System.Linq;
 
@@ -43,16 +42,23 @@ namespace CUBRID.Data.CUBRIDClient
   {
     private readonly CUBRIDParameterCollection paramCollection;
     private int bindCount;
+    private int cache_reusable;
     private string cmdText;
     private int cmdTimeout = 15; //seconds
     private CommandType cmdType;
+    private int columnCount;
     private ColumnMetaData[] columnInfos;
     private CUBRIDConnection conn;
     private CUBRIDDataReader dataReader;
-    private bool isPrepared;
-    private CUBRIDParameter[] parameters;
-    private CUBRIDStatementType statementType;
     private int handle;
+    private bool isPrepared;
+    private bool isUpdateable;
+    private CUBRIDParameter[] parameters;
+    private int resultCacheLifetime;
+    private int resultCount;
+    private ResultInfo[] resultInfo;
+    private CUBRIDStatementType statementType;
+
     private StmtType stmtType = StmtType.NORMAL;
     private CUBRIDTransaction transaction;
     private UpdateRowSource updatedRowSource = UpdateRowSource.Both;
@@ -96,7 +102,6 @@ namespace CUBRID.Data.CUBRIDClient
       : this()
     {
       cmdText = sql;
-      paramCollection.sql = sql;
     }
 
     /// <summary>
@@ -109,7 +114,6 @@ namespace CUBRID.Data.CUBRIDClient
     {
       this.conn = conn;
       paramCollection.SetParametersEncoding(conn.GetEncoding());
-      paramCollection.sql = sql;
     }
 
     /// <summary>
@@ -162,7 +166,6 @@ namespace CUBRID.Data.CUBRIDClient
             cmdText = "select * from `" + value.Trim() + "`";
           }
         }
-        paramCollection.sql = cmdText;
         if (isPrepared)
         {
           paramCollection.Clear();
@@ -271,15 +274,6 @@ namespace CUBRID.Data.CUBRIDClient
     }
 
     /// <summary>
-    /// Get/Set the isGeneratedKeys attribute. Only when it is true, the key can be generated when execute the insert with auto increment statement,<para/> 
-    /// and the afterwards <see cref="GetGeneratedKeys()"/> can return the correct result.
-    /// </summary>
-    public bool IsGeneratedKeys
-    {
-        get { return false; }
-    }
-
-    /// <summary>
     ///   Gets a value indicating whether this instance is prepared.
     /// </summary>
     /// <value> <c>true</c> if this instance is prepared; otherwise, <c>false</c> . </value>
@@ -313,7 +307,7 @@ namespace CUBRID.Data.CUBRIDClient
           return CCIPrepareOption.CCI_PREPARE_CALL;
       }
 
-      return CCIPrepareOption.CCI_PREPARE_NORMAL | CCIPrepareOption.CCI_PREPARE_HOLDABLE;
+      return CCIPrepareOption.CCI_PREPARE_NORMAL;
     }
 
     /// <summary>
@@ -330,16 +324,7 @@ namespace CUBRID.Data.CUBRIDClient
       if (cmdText == null || cmdText.Trim().Length == 0)
         return;
 
-      for (int i = 0; i < paramCollection.Count; i++)
-      { 
-          cmdText = cmdText.Replace(paramCollection[i].ParameterName, "?");
-      }
-      T_CCI_ERROR err = new T_CCI_ERROR();
-      handle = CciInterface.cci_prepare (conn, cmdText, ref err);
-      if (handle < 0)
-      {
-        throw new InvalidOperationException (err.err_msg);
-      }
+      PrepareInternal(cmdText, GetPrepareOption());
 
       isPrepared = true;
     }
@@ -369,25 +354,11 @@ namespace CUBRID.Data.CUBRIDClient
 
       for (int i = 0; i < paramCollection.Count; i++)
       {
-        parameters[i] = paramCollection[i];
-        if (parameters[i].InnerCUBRIDDataType == CUBRIDDataType.CCI_U_TYPE_BLOB ||
-            parameters[i].InnerCUBRIDDataType == CUBRIDDataType.CCI_U_TYPE_CLOB)
-          {
-             isPrepared = false;
-            throw new CUBRIDException ("Not implemented");
-          }
-        int err_code = CciInterface.cci_bind_param
-                       (conn, handle, i + 1, T_CCI_A_TYPE.CCI_A_TYPE_STR, parameters[i], CUBRIDDataType.CCI_U_TYPE_STRING, (char)0);
-
-        if (err_code < 0)
-          {
-             isPrepared = false;
-            throw new CUBRIDException (err_code);
-          }
+        BindParameter(i, paramCollection[i]);
       }
+
       //TODO Verify if these initializations are required
       bindCount = paramCollection.Count;
-      isPrepared = false;
     }
 
     /// <summary>
@@ -399,19 +370,16 @@ namespace CUBRID.Data.CUBRIDClient
       object ret = null;
 
       BindParameters();
+
       using (CUBRIDDataReader dr = ExecuteInternal())
       {
-          if (dr.Read())
-          {
-              ret = dr.GetValue(0);
-          }
-          if (ret == null)
-          {
-              if (dr.GetColumnCount() != 0)
-                  ret = DBNull.Value;
-          }
-          dr.Close();
+        if (dr.Read())
+        {
+          ret = dr.GetValue(0);
+        }
+        dr.Close();
       }
+
       return ret;
     }
 
@@ -442,51 +410,14 @@ namespace CUBRID.Data.CUBRIDClient
         */
 
     /// <summary>
-    ///   Gets the generated keys (Auto-increment columns). In order to get the generated keys, <para/>
-    ///   you must set <see cref="IsGeneratedKeys"/> = true before execute the insert statement. 
+    ///   Gets the generated keys (Auto-increment columns).
     /// </summary>
     /// <returns> A <see cref="T:System.Data.Common.DbDataReader" /> . </returns>
     public DbDataReader GetGeneratedKeys()
     {
-        return null;
-    }
-	
-    internal CUBRIDDataReader ExecuteInternal()
-    {
-	    T_CCI_ERROR err = new T_CCI_ERROR();
-        int ret = CciInterface.cci_execute(handle, (char)CCIExecutionOption.CCI_EXEC_QUERY_ALL, 0, ref err);
-	    if (ret < 0)
-	      {
-	        throw new CUBRIDException (err.err_msg);
-	      }
-
-	    //T_CCI_COL_INFO res;
-	    columnInfos = CciInterface.cci_get_result_info (handle);
-	    dataReader = new CUBRIDDataReader (this, handle, ret, columnInfos, ret);
-
-	    return dataReader;
-    }
-
-    /// <summary>
-    ///   Executes the command text against the connection.
-    /// </summary>
-    /// <param name="behavior"> An instance of <see cref="T:System.Data.CommandBehavior" /> . </param>
-    /// <returns> A <see cref="T:System.Data.Common.DbDataReader" /> . </returns>
-    public new DbDataReader ExecuteReader(CommandBehavior behavior)
-    {
-        //WORKAROUND for Exception: DataReader is already open
-        //if (this.dataReader != null)
-        //	ResetDataReader();
-
-        if (dataReader != null)
-            throw new CUBRIDException(Utils.GetStr(MsgId.DataReaderIsAlreadyOpen));
-
-        BindParameters();
-
-        ExecuteInternal();
-        dataReader.commandBehavior = behavior;
-
-        return dataReader;
+      if (conn.AutoCommit)
+        throw new CUBRIDException("AutoCommit must be false");
+      return conn.Stream.GetGeneratedKeys(this, handle);
     }
 
     /// <summary>
@@ -499,14 +430,14 @@ namespace CUBRID.Data.CUBRIDClient
       //WORKAROUND for Exception: DataReader is already open
       //if (this.dataReader != null)
       //	ResetDataReader();
-      if (dataReader != null)      
-      {
-        //throw new CUBRIDException(Utils.GetStr(MsgId.DataReaderIsAlreadyOpen));
-        dataReader.Close();
-      }
+
+      if (dataReader != null)
+        throw new CUBRIDException(Utils.GetStr(MsgId.DataReaderIsAlreadyOpen));
 
       BindParameters();
 
+      if (!IsQueryStatement())
+        throw new CUBRIDException(Utils.GetStr(MsgId.InvalidQueryType));
 
       ExecuteInternal();
 
@@ -521,21 +452,35 @@ namespace CUBRID.Data.CUBRIDClient
     {
       BindParameters();
 
-      T_CCI_ERROR err = new T_CCI_ERROR();
-      int ret = CciInterface.cci_execute(handle, (char)CCIExecutionOption.CCI_EXEC_QUERY_ALL, 0, ref err);
-      if (ret < 0)
+      if (IsQueryStatement())
+        throw new CUBRIDException(Utils.GetStr(MsgId.InvalidQueryType));
+
+      ExecuteInternal();
+
+      // [APIS-223] Call a stored procedure's return value is not assigned to the return parameter.
+      if (statementType == CUBRIDStatementType.CUBRID_STMT_CALL ||
+          statementType == CUBRIDStatementType.CUBRID_STMT_CALL_SP)
       {
-        throw new CUBRIDException (err.err_msg);
+        conn.Stream.RequestFetch(handle);
+        conn.Stream.ReadInt(); //It is always == 1? (it is the number of tuples returned by the server)
+
+        int colCount = GetOutModeParameterCount() + 1;
+        ResultTuple tuple = new ResultTuple(colCount);
+        conn.Stream.ReadResultTupleSP(tuple, colCount, conn);
+
+        int k = 1;
+        foreach (CUBRIDParameter t in parameters)
+        {
+          if (t.Direction == ParameterDirection.Output ||
+              t.Direction == ParameterDirection.InputOutput)
+          {
+            t.Value = tuple[k];
+            k++;
+          }
+        }
       }
 
-      columnInfos = CciInterface.cci_get_result_info (handle);
-
-      if (handle > 0)
-      {
-        CciInterface.cci_close_req_handle (handle);
-        handle = 0;
-      }
-      return ret;
+      return resultCount;
     }
 
     private int GetOutModeParameterCount()
@@ -548,14 +493,138 @@ namespace CUBRID.Data.CUBRIDClient
     /// </summary>
     public void Close()
     {
-      if (conn.State == ConnectionState.Closed)
-        return;
+      conn.Stream.RequestCloseHandle(handle);
+    }
+
+    internal void PrepareInternal(string sql, CCIPrepareOption prepareOption)
+    {
+      conn.ReconnectIfNeeded();
+
+      conn.Stream.RequestPrepare(sql, prepareOption, conn.GetEncoding());
+
+      handle = conn.Stream.ResponseCode;
+      resultCacheLifetime = conn.Stream.ReadInt();
+      statementType = (CUBRIDStatementType)conn.Stream.ReadByte();
+      bindCount = conn.Stream.ReadInt();
+      isUpdateable = (conn.Stream.ReadByte() == 1);
+      columnCount = conn.Stream.ReadInt();
+
+      columnInfos = conn.Stream.ReadColumnInfo(columnCount);
+
+      if (bindCount > 0)
+      {
+        parameters = new CUBRIDParameter[bindCount];
+      }
+
+      if (statementType == CUBRIDStatementType.CUBRID_STMT_CALL_SP)
+      {
+        columnCount = bindCount + 1;
+      }
+
+      if (conn.LogTraceApi)
+      {
+        CUBRIDTrace.WriteLine(string.Format("FLAG[{0}], SQL[{1}]", statementType, CommandText));
+      }
+    }
+
+    internal CUBRIDDataReader ExecuteInternal()
+    {
+      if (parameters != null && IsAllParameterBound() == false)
+        throw new CUBRIDException(Utils.GetStr(MsgId.NotAllParametersAreBound));
+
+      byte[] paramModes = null;
+      byte fetchFlag = 0;
+
+      if (statementType == CUBRIDStatementType.CUBRID_STMT_CALL_SP && parameters != null)
+      {
+        paramModes = new byte[parameters.Length];
+        for (int i = 0; i < parameters.Length; i++)
+        {
+          paramModes[i] = Convert.ToByte(parameters[i].Direction);
+        }
+      }
+
+      if (statementType == CUBRIDStatementType.CUBRID_STMT_SELECT)
+      {
+        fetchFlag = 1;
+      }
+
+      int totalTupleCount = conn.Stream.RequestExecute(handle, CCIExecutionOption.CCI_EXEC_NORMAL, parameters,
+                                                       paramModes, fetchFlag, conn.AutoCommit);
+      if (conn.LogTraceApi)
+      {
+        CUBRIDTrace.WriteLine(string.Format("FLAG[{0}], MAX_COL_SIZE[{1}]", statementType, 0));
+      }
+
+      cache_reusable = conn.Stream.ReadByte();
+      resultCount = conn.Stream.ReadInt();
+      resultInfo = conn.Stream.ReadResultInfo(resultCount);
+
+      if (statementType == CUBRIDStatementType.CUBRID_STMT_SELECT)
+      {
+        conn.Stream.ReadByte();
+        conn.Stream.ReadInt();
+        int tupleCount = conn.Stream.ReadInt();
+        dataReader = new CUBRIDDataReader(this, handle, totalTupleCount, columnInfos, tupleCount);
+
+        return dataReader;
+      }
+
+      return null;
+    }
+
+    internal bool NextResult()
+    {
+      int totalTupleCount = conn.Stream.RequestNextResult(handle);
+      CUBRIDStatementType commandTypeIs = (CUBRIDStatementType)conn.Stream.ReadByte();
+      conn.Stream.ReadByte();
+      int columnCount = conn.Stream.ReadInt();
+      columnInfos = conn.Stream.ReadColumnInfo(columnCount);
+
+      if (commandTypeIs == CUBRIDStatementType.CUBRID_STMT_SELECT)
+      {
+        dataReader = new CUBRIDDataReader(this, handle, totalTupleCount, columnInfos);
+      }
+
+      return true;
     }
 
     private bool IsAllParameterBound()
     {
-      return parameters.All (t => t != null);
+      return parameters.All(t => t != null);
     }
+
+    internal void BindParameter(int index, CUBRIDDataType type, object value)
+    {
+      parameters[index] = new CUBRIDParameter();
+      parameters[index].CUBRIDDataType = type;
+      parameters[index].Value = value;
+    }
+
+    internal void BindParameter(int index, CUBRIDDataType type, object value, ParameterDirection direction)
+    {
+      BindParameter(index, type, value);
+      parameters[index].Direction = direction;
+    }
+
+    internal void BindParameter(int index, CUBRIDParameter bindParameter)
+    {
+      parameters[index] = bindParameter;
+    }
+
+    /*
+         * [APIS-220] The CUBRID no longer support CAS_FC_MAKE_OUT_RS.
+    internal void GetOutResultSet(int handle)
+    {
+      this.handle = this.conn.Stream.RequestOutResultSet(handle); //TODO: check if we need to free "old" handle
+      this.statementType = (CUBRIDStatementType)this.conn.Stream.ReadByte();
+      this.resultCount = this.conn.Stream.ReadInt();
+      this.isUpdateable = (this.conn.Stream.ReadByte() == 1);
+      this.columnCount = this.conn.Stream.ReadInt();
+
+      this.columnInfos = this.conn.Stream.ReadColumnInfo(columnCount);
+    }
+        */
 
     private bool IsQueryStatement()
     {
@@ -594,11 +663,13 @@ namespace CUBRID.Data.CUBRIDClient
         clone.cmdTimeout = cmdTimeout;
         clone.UpdatedRowSource = UpdatedRowSource;
 
-        for (int i = 0; i < paramCollection.Count; i++)
+        if (parameters != null)
         {
-          CUBRIDParameter p = (CUBRIDParameter)paramCollection[i].Clone();
-          clone.Parameters.Add(p);        
-	    }
+          foreach (CUBRIDParameter p in parameters)
+          {
+            clone.Parameters.Add(p.Clone());
+          }
+        }
         return clone;
       }
     }

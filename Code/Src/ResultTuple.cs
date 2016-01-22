@@ -56,23 +56,6 @@ namespace CUBRID.Data.CUBRIDClient
       set { valueArray[idx] = value; }
     }
 
-    internal void toArray(int idx)
-    {
-        valueArray[idx] = valueArray[idx].ToString().Substring(1, valueArray[idx].ToString().Length - 2);
-        valueArray[idx] = valueArray[idx].ToString().Split(',');
-        trim(idx);
-    }
-
-    internal void trim(int idx)
-    {
-        int index = 0;
-        string[] array = (string[])valueArray[idx];
-        foreach (string s in array)
-        {
-            array[index++]=s.Trim();
-        }
-    }
-
     internal object this[string name]
     {
       get { return valueDictionary[name]; }

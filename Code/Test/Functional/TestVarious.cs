@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -175,8 +175,7 @@ namespace Test.Functional
           }
           catch (Exception ex)
           {
-            string r = "Syntax: Unknown class \"xyz\". select count(*) from xyz";
-            Debug.Assert(ex.Message.Substring(0,r.Length) == r);//todo
+            Debug.Assert(ex.Message == "Syntax: Unknown class \"xyz\". select count(*) from xyz");//todo
           }
         }
       }
@@ -199,8 +198,7 @@ namespace Test.Functional
           }
           catch (Exception ex)
           {
-              string r = "Syntax: Unknown class \"xyz\". select count(*) from xyz";
-              Debug.Assert(ex.Message.Substring(0, r.Length) == r);//todo
+            Debug.Assert(ex.Message == "Syntax: Unknown class \"xyz\". select count(*) from xyz"); //TODO
           }
         }
       }
@@ -263,7 +261,6 @@ namespace Test.Functional
     /// <summary>
     /// Test CUBRIDCommand GetGeneratedKeys() method
     /// </summary>
-    /*
     private static void Test_GetGeneratedKeys()
     {
       string sqlTablesCount = "select count(*) from db_class";
@@ -300,7 +297,7 @@ namespace Test.Functional
         Debug.Assert(newTableCount == tablesCount);
       }
     }
-    */
+
     /// <summary>
     /// Test ExecuteNonQuery() and ExecuteReader() methods
     /// </summary>
@@ -342,10 +339,8 @@ namespace Test.Functional
           }
           catch (CUBRIDException ex)
           {
-            string r = "Operation would have caused one or more unique constraint violations.";
-            Debug.Assert(ex.Message.Substring(0,r.Length) == r);
+            Debug.Assert(ex.Message == "Invalid query type!");
           }
-          ExecuteSQL("delete from nation where code ='x'", conn);
         }
       }
     }

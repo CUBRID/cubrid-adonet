@@ -63,8 +63,9 @@
     <Compile Include="ColumnMetaData.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="CUBRIDBatchResult.cs" />
-    <Compile Include="CUBRIDCciInterface.cs" />
     <Compile Include="CUBRIDConnectionProperties.cs" />
+    <Compile Include="CUBRIDInputStream.cs" />
+    <Compile Include="CUBRIDOutputStream.cs" />
     <Compile Include="CUBRIDTrace.cs" />
     <Compile Include="DataType\CUBRIDBlob.cs" />
     <Compile Include="DataType\CUBRIDClob.cs" />

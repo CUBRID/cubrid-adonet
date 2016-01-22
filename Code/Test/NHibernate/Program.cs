@@ -41,7 +41,7 @@ namespace CUBRID.Data.TestNHibernate
   /// </summary>
   public partial class TestCases
   {
-      private const string connString = "server=test-db-server;database=demodb;port=33000;user=public;password=";
+    private const string connString = "server=localhost;database=demodb;port=33000;user=public;password=";
 
     static int executed;
     static int passed;

@@ -37,8 +37,20 @@ namespace CUBRID.Data.CUBRIDClient
   /// </summary>
   public class CUBRIDClob
   {
+    private const int BLOB_MAX_IO_LENGTH = 128 * 1024;
     private readonly CUBRIDConnection connection;
-    private IntPtr packedLobHandle;
+    private int lobSize;
+    private byte[] packedLobHandle;
+
+    /// <summary>
+    ///   Initializes a new instance of the <see cref="CUBRIDClob" /> class.
+    /// </summary>
+    public CUBRIDClob()
+    {
+      lobSize = 0;
+      connection = null;
+      packedLobHandle = null;
+    }
 
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDClob" /> class.
@@ -46,27 +58,25 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="conn"> The conn. </param>
     public CUBRIDClob(CUBRIDConnection conn)
     {
-        connection = conn;
-        packedLobHandle = connection.LOBNew(CUBRIDDataType.CCI_U_TYPE_CLOB);
+      connection = conn;
+
+      packedLobHandle = connection.LOBNew(CUBRIDDataType.CCI_U_TYPE_CLOB);
+      InitClob(packedLobHandle);
     }
 
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDClob" /> class.
     /// </summary>
     /// <param name="responseBuffer"> The response buffer. </param>
+    /// <param name="readCursor"> The read cursor. </param>
+    /// <param name="size"> The size. </param>
     /// <param name="conn"> The connection. </param>
-    public CUBRIDClob(IntPtr responseBuffer, CUBRIDConnection conn)
+    public CUBRIDClob(byte[] responseBuffer, int readCursor, int size, CUBRIDConnection conn)
     {
-        packedLobHandle = responseBuffer;
-        connection = conn;
-    }
-
-    /// <summary>
-    ///   Destructors of the <see cref="CUBRIDClob" /> class.
-    /// </summary>
-    ~CUBRIDClob()
-    {
-        CciInterface.cci_clob_free(packedLobHandle);
+      byte[] packedLobHandleBuffer = new byte[size];
+      Array.Copy(responseBuffer, readCursor, packedLobHandleBuffer, 0, size);
+      InitClob(packedLobHandleBuffer);
+      connection = conn;
     }
 
     /// <summary>
@@ -75,11 +85,33 @@ namespace CUBRID.Data.CUBRIDClient
     /// <value> The length of the CLOB. </value>
     public long ClobLength
     {
-        get
+      get { return lobSize; }
+      set
+      {
+        int bitpos = 64;
+        const int pos = 4;
+        for (int i = pos; i < pos + 8; i++)
         {
-            return (long)CciInterface.cci_clob_size(packedLobHandle);
+          bitpos -= 8;
+          packedLobHandle[i] = (byte)((value >> bitpos) & 0xFF);
         }
+      }
     }
+
+    private void InitClob(byte[] packedLobHandleBuffer)
+    {
+      packedLobHandle = packedLobHandleBuffer;
+      int pos = 0;
+      pos += 4;
+
+      lobSize = 0;
+      for (int i = pos; i < pos + 8; i++)
+      {
+        lobSize <<= 8;
+        lobSize |= (packedLobHandle[i] & 0xff);
+      }
+    }
+
     /// <summary>
     ///   Gets the LOB content as String.
     /// </summary>
@@ -88,22 +120,45 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public string GetString(long pos, int length)
     {
-        ulong lob_size = CciInterface.cci_blob_size(packedLobHandle);
-        if (lob_size < 0)
-        {
-            throw new CUBRIDException("Get lob size failed.");
-        }
-        pos--;
-        lob_size = (lob_size - (ulong)pos < (ulong)length) ? lob_size - (ulong)pos : (ulong)length;
+      using (CUBRIDConnection con = new CUBRIDConnection())
+      {
+        con.ConnectionString = connection.ConnectionString;
+        con.Open();
 
-        byte[] buf = new byte[lob_size];
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        int res = CciInterface.cci_clob_read(connection.Conection, packedLobHandle, (ulong)pos, (int)lob_size, buf, ref err);
-        if (res < 0)
+        pos--;
+        int totalReadLen = 0;
+
+        if ((pos + length) > ClobLength)
         {
-            throw new CUBRIDException(err.err_code, err.err_msg);
+          length = (int)(ClobLength - pos);
         }
-        return System.Text.Encoding.Default.GetString(buf);
+
+        if (length <= 0)
+          return String.Empty;
+
+        byte[] buff = new byte[length];
+        while (length > 0)
+        {
+          int readLen = Math.Min(length, BLOB_MAX_IO_LENGTH);
+          int realReadLen = con.LOBRead(packedLobHandle, pos, buff, totalReadLen, readLen);
+
+          pos += realReadLen;
+          length -= realReadLen;
+          totalReadLen += realReadLen;
+
+          if (realReadLen == 0)
+            break;
+        }
+
+        con.Close();
+
+        if (totalReadLen >= buff.Length)
+        {
+          return connection.GetEncoding().GetString(buff);
+        }
+
+        return String.Empty;
+      }
     }
 
     /// <summary>
@@ -112,29 +167,44 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="pos"> The position. </param>
     /// <param name="str"> The string. </param>
     /// <returns> </returns>
-    public long SetString(ulong pos, string str)
+    public long SetString(long pos, string str)
     {
-        int len = str.Length;
-        T_CCI_ERROR err = new T_CCI_ERROR();
+      byte[] bytes = connection.GetEncoding().GetBytes(str);
+      int len = bytes.Length;
+      int offset = 0;
 
-        pos--;
+      if (ClobLength + 1 != pos)
+        throw new CUBRIDException(Utils.GetStr(MsgId.InvalidLOBPosition));
 
-        int res = CciInterface.cci_clob_write(
-            connection.Conection, packedLobHandle,
-            pos, str.Length, str, ref err);
-        if (res < 0)
-        {
-            throw new CUBRIDException(err.err_code, err.err_msg);
-        }
+      pos--;
 
-        return res;
+      long totalWriteLen = 0;
+
+      while (len > 0)
+      {
+        int writeLen = Math.Min(len, BLOB_MAX_IO_LENGTH);
+        int realWriteLen = connection.LOBWrite(packedLobHandle, pos, bytes, offset, writeLen);
+
+        pos += realWriteLen;
+        len -= realWriteLen;
+        offset += realWriteLen;
+        totalWriteLen += realWriteLen;
+      }
+
+      if (pos > ClobLength)
+      {
+        lobSize = (int)pos;
+        ClobLength = lobSize;
+      }
+
+      return totalWriteLen;
     }
 
     /// <summary>
     ///   Gets the packed LOB handle.
     /// </summary>
     /// <returns> </returns>
-    public IntPtr GetPackedLobHandle()
+    public byte[] GetPackedLobHandle()
     {
       return packedLobHandle;
     }

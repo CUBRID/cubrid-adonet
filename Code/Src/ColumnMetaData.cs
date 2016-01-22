@@ -73,7 +73,7 @@ namespace CUBRID.Data.CUBRIDClient
       isReverseUnique = false;
       isShared = false;
     }
-    /*
+
     internal ColumnMetaData(CUBRIDDataType cType, short cScale, int cPrecision, string cName)
     {
       type = cType;
@@ -98,7 +98,7 @@ namespace CUBRID.Data.CUBRIDClient
       isReverseUnique = false;
       isShared = false;
     }
-    */
+
     /// <summary>
     ///   Gets or sets the type.
     /// </summary>

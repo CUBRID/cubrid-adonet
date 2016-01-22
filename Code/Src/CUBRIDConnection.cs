@@ -29,7 +29,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -60,26 +59,46 @@ namespace CUBRID.Data.CUBRIDClient
     #endregion
 
     private const int _defaultPort = 33000;
+
+    private static readonly byte[] driverInfo =
+      {
+        (byte) 'C',
+        (byte) 'U',
+        (byte) 'B',
+        (byte) 'R',
+        (byte) 'K', 
+        (byte) 5, //"OLEDB" client
+        0x40 | 0x03, //TODO Document this
+        0,
+        0,
+        0
+      };
+
     private readonly CUBRIDConnectionProperties connProperties;
 
     private bool autoCommit = true;
-    private string connEncoding = "utf-8";
+    private byte[] brokerInfo;
+    private Encoding connEncoding = Encoding.Default;
     private ConnectionState connState = ConnectionState.Closed;
     private string connString;
     private int connTimeout = 30; //seconds
     private string database = "";
     private string db_version = "";
-    private CUBRIDIsolationLevel isolationLevel = CUBRIDIsolationLevel.TRAN_DEFAULT_ISOLATION;
-    private int lockTimeout = -1; //the connection lock timeout as milliseconds.
+    private byte[] dbinfo;
+    private CUBRIDIsolationLevel isolationLevel = CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE;
+    private bool keepConnectionAlive;
+    private int lockTimeout = 30 * 1000; //the connection lock timeout as milliseconds.
     private const int maxStringLength = Int16.MaxValue;
     private string password = "";
     private int port = _defaultPort;
     private CUBRIDSchemaProvider schemaProvider;
-    private string server = "";
+    private string server = "localhost";
     private const string serverVersion = "";
-    private int sessionId = 0;
-    private int con_id = 0;
-    private string user = "";
+    private int sessionId;
+    private Socket socket;
+    private bool statementPooling;
+    internal CUBRIDStream stream;
+    private string user = "public";
 
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDConnection" /> class.
@@ -153,14 +172,8 @@ namespace CUBRID.Data.CUBRIDClient
     /// <value> The session id. </value>
     public int SessionId
     {
-      get 
-      {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          return sessionId;
-      }
+      get { return sessionId; }
+      set { sessionId = value; }
     }
 
     /// <summary>
@@ -169,24 +182,8 @@ namespace CUBRID.Data.CUBRIDClient
     /// <value> The database version. </value>
     public string DbVersion
     {
-      get 
-      {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          return db_version; 
-      }
+      get { return db_version; }
       set { db_version = value; }
-    }
-
-    /// <summary>
-    ///   Gets conection.
-    /// </summary>
-    /// <value> The Conection. </value>
-    public int Conection
-    {
-        get { return con_id; }
     }
 
     /// <summary>
@@ -228,7 +225,7 @@ namespace CUBRID.Data.CUBRIDClient
         }
         if (value == null)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.ConnectionStringIsNULL) + ": " + State + ".");
+            throw new CUBRIDException("Connection string is null.");
         }
         connString = value;
         connProperties.Reset(); // reset properties
@@ -319,7 +316,7 @@ namespace CUBRID.Data.CUBRIDClient
     {
         get 
         {
-            if (State == ConnectionState.Closed)
+            if (State != ConnectionState.Open)
             {
                 throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
             }
@@ -334,14 +331,7 @@ namespace CUBRID.Data.CUBRIDClient
     [Browsable(true)]
     public override string DataSource
     {
-      get 
-      {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          return server; 
-      }
+      get { return server; }
     }
 
     /// <summary>
@@ -351,14 +341,7 @@ namespace CUBRID.Data.CUBRIDClient
     [Browsable(true)]
     public bool AutoCommit
     {
-      get 
-      {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          return autoCommit; 
-      }
+      get { return autoCommit; }
     }
 
     /// <summary>
@@ -367,14 +350,7 @@ namespace CUBRID.Data.CUBRIDClient
     /// <value> The length of the max string. </value>
     public int MaxStringLength
     {
-      get 
-      {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          return maxStringLength;
-      }
+      get { return maxStringLength; }
     }
 
     /// <summary>
@@ -383,13 +359,18 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> A <see cref="T:System.Data.Common.DbProviderFactory" /> . </returns>
     protected override DbProviderFactory DbProviderFactory
     {
+      get { return CUBRIDClientFactory.Instance; }
+    }
+
+    /// <summary>
+    /// </summary>
+    internal CUBRIDStream Stream
+    {
       get
       {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          return CUBRIDClientFactory.Instance; 
+        stream.ClearBuffer();
+
+        return stream;
       }
     }
 
@@ -399,26 +380,12 @@ namespace CUBRID.Data.CUBRIDClient
     /// <value> The isolation level. </value>
     public CUBRIDIsolationLevel IsolationLevel
     {
-      get 
-      {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          return GetIsolationLevel(); 
-      }
-      set 
-      {
-          if (State == ConnectionState.Closed)
-          {
-              throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-          }
-          SetIsolationLevel(value);
-      }
+      get { return isolationLevel; }
+      set { isolationLevel = value; }
     }
 
     /// <summary>
-    ///   Sets the connection timeout.The interface affect Open() only, can't affect OpenAsync().
+    ///   Sets the connection timeout.
     /// </summary>
     /// <param name="value"> The value. </param>
     public void SetConnectionTimeout(int value)
@@ -428,7 +395,7 @@ namespace CUBRID.Data.CUBRIDClient
         throw new CUBRIDException(Utils.GetStr(MsgId.NotAllowedToChangeConnectionTimeoutWhenStateIs) + ": " + State +
                                   ".");
       }
-      if (value <= Int32.MaxValue)
+      if (value >= 1 && value <= 99)
       {
         connTimeout = value;
       }
@@ -473,7 +440,8 @@ namespace CUBRID.Data.CUBRIDClient
           level = CUBRIDIsolationLevel.TRAN_REP_CLASS_COMMIT_INSTANCE;
           break;
         case System.Data.IsolationLevel.ReadUncommitted:
-          throw new CUBRIDException(Utils.GetStr(MsgId.NotSupportedInCUBRID));
+          level = CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE;
+          break;
         case System.Data.IsolationLevel.RepeatableRead:
           level = CUBRIDIsolationLevel.TRAN_REP_CLASS_REP_INSTANCE;
           break;
@@ -483,14 +451,13 @@ namespace CUBRID.Data.CUBRIDClient
         case System.Data.IsolationLevel.Snapshot:
           throw new CUBRIDException(Utils.GetStr(MsgId.NotSupportedInCUBRID));
         case System.Data.IsolationLevel.Unspecified:
-          //Default value
-          level = CUBRIDIsolationLevel.TRAN_REP_CLASS_COMMIT_INSTANCE;
+          level = CUBRIDIsolationLevel.TRAN_UNKNOWN_ISOLATION;
           break;
         default:
           level = CUBRIDIsolationLevel.TRAN_REP_CLASS_REP_INSTANCE;
           break;
       }
-      SetAutoCommit(false);
+
       return new CUBRIDTransaction(this, level);
     }
 
@@ -510,15 +477,13 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public CUBRIDTransaction BeginTransaction(CUBRIDIsolationLevel iso)
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
+      if (connState != ConnectionState.Open)
+        throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
 
-        SetAutoCommit(false);
-        CUBRIDTransaction t = new CUBRIDTransaction(this, iso);
+      autoCommit = false;
+      CUBRIDTransaction t = new CUBRIDTransaction(this, iso);
 
-        return t;
+      return t;
     }
 
     /// <summary>
@@ -529,15 +494,9 @@ namespace CUBRID.Data.CUBRIDClient
     {
       if (connState == ConnectionState.Closed)
         return;
-      T_CCI_ERROR err = new T_CCI_ERROR();
-      try
-      {
-          CciInterface.cci_disconnect(con_id, ref err);
-      }
-      finally
-      {
-          SetConnectionState(ConnectionState.Closed);
-      }
+
+      CloseInternal();
+      SetConnectionState(ConnectionState.Closed);
     }
 
     /// <summary>
@@ -555,57 +514,104 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public new CUBRIDCommand CreateCommand()
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
-        CUBRIDCommand cmd = new CUBRIDCommand();
-        cmd.Connection = this;
+      CUBRIDCommand cmd = new CUBRIDCommand();
+      cmd.Connection = this;
 
-        return cmd;
+      return cmd;
     }
-  
+
     /// <summary>
     ///   Opens a database connection with the settings specified by the <see
     ///    cref="P:System.Data.Common.DbConnection.ConnectionString" />.
     /// </summary>
     public override void Open()
     {
-        Trace.WriteLineIf(Utils.TraceState,
+      Trace.WriteLineIf(Utils.TraceState,
                         String.Format(
                           "Open::Connection parameters: server: {0}, port: {1}, database: {2}, user: {3}, password: {4}",
                           server, port, database, user, password));
-        if (connState != ConnectionState.Closed)
-        {
-            throw new CUBRIDException("Connection is already open!");
-        }
-        string connect_url = null;
-        if (connProperties.PropertiesString == null || connProperties.PropertiesString.Length == 0)
-        {
-            connect_url = string.Format("cci:CUBRID:{0}:{1}:{2}:::", server, port, database);
-        }
-        else
-        {
-            connect_url = string.Format("cci:CUBRID:{0}:{1}:{2}:::?{3}", server, port, database, connProperties.PropertiesString);
-        }
- 
 
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        con_id = CciInterface.cci_connect_with_url_ex(connect_url, user, password, ref err);
-        if (con_id <= 0)
+      if (State == ConnectionState.Open)
+      {
+        throw new InvalidOperationException(Utils.GetStr(MsgId.ConnectionAlreadyOpen));
+      }
+
+      SetConnectionState(ConnectionState.Connecting);
+
+      keepConnectionAlive = false;
+      statementPooling = false;
+
+      stream = new CUBRIDStream();
+
+      try
+      {
+        try
         {
-            SetConnectionState(ConnectionState.Closed);
-            throw new CUBRIDException(err.err_code, err.err_msg);            
+          Reconnect();
         }
-        else
+        catch (Exception ex)
         {
-            SetConnectionState(ConnectionState.Open);
+          if (connProperties.AlterHostCount() > 0)
+          {
+            for (int i = 0; i < connProperties.AltHosts.Length; i++)
+            {
+              string[] pair = connProperties.AltHosts[i].Split(':');
+              if (pair.Length == 2)
+              {
+                server = pair[0];
+                port = Convert.ToInt32(pair[1]);
+              }
+              else
+              {
+                port = _defaultPort;
+                server = pair[0];
+              }
+
+              try
+              {
+                Reconnect();
+                if (connState == ConnectionState.Open)
+                  break;
+              }
+              catch (Exception exp)
+              {
+                if (i == connProperties.AltHosts.Length - 1)
+                {
+                  throw exp;
+                }
+              }
+            }
+          }
+          else
+          {
+            throw ex;
+          }
         }
 
-        SetEncoding(connEncoding);
-     }
-     private void ParseConnectionString()
-     {
+        EndTransaction(CCITransactionType.CCI_TRAN_COMMIT);
+      }
+      catch (Exception)
+      {
+        SetConnectionState(ConnectionState.Closed);
+        throw;
+      }
+    }
+
+    internal void Abort()
+    {
+      try
+      {
+        Close();
+      }
+      catch (Exception ex)
+      {
+        Trace.WriteLineIf(Utils.TraceState, "Error occurred aborting the connection. Exception was: " + ex.Message);
+      }
+      SetConnectionState(ConnectionState.Closed);
+    }
+
+    private void ParseConnectionString()
+    {
       char[] delimiter = { ';' };
       string[] tokens = connString.Split(delimiter);
 
@@ -614,7 +620,7 @@ namespace CUBRID.Data.CUBRIDClient
         // URL mode
         // parse url string
         string[] tokenURL = connString.Split('?');
-        if (tokenURL.Length > 0)
+        if (tokenURL.Length == 2)
         {
           tokens = tokenURL[0].Split(':');
           {
@@ -627,8 +633,7 @@ namespace CUBRID.Data.CUBRIDClient
           }
 
           // parse connection properties
-          if(tokenURL.Length>1)
-            connProperties.SetConnectionProperties(tokenURL[1]);
+          connProperties.SetConnectionProperties(tokenURL[1]);
           // auto-commit
           autoCommit = connProperties.AutoCommit;
 
@@ -673,7 +678,7 @@ namespace CUBRID.Data.CUBRIDClient
             }
             else if (pair[0].ToLower().Equals("charset"))
             {
-              connEncoding = pair[1];
+              connEncoding = EncodingFromString(pair[1]);
             }
             else if (pair[0].ToLower().Equals("autocommit"))
             {
@@ -690,14 +695,6 @@ namespace CUBRID.Data.CUBRIDClient
       if (database == string.Empty || database.Length == 0)
       {
         throw new CUBRIDException(Utils.GetStr(MsgId.DBNameIsEmpty));
-      }
-      if (server == string.Empty || server.Length == 0)
-      {
-          throw new CUBRIDException(Utils.GetStr(MsgId.ServerIsEmpty));
-      }
-      if (user == string.Empty || user.Length == 0)
-      {
-          throw new CUBRIDException(Utils.GetStr(MsgId.UserIsEmpty));
       }
     }
 
@@ -734,29 +731,195 @@ namespace CUBRID.Data.CUBRIDClient
     /// </summary>
     public void SetEncoding(string name)
     {
-        if (connState != ConnectionState.Open)
-        {
-            connEncoding = name;
-            return;
-        }
-
-      /* convert by driver, not cci
-      int err_code = CciInterface.cci_set_charset(con_id, name);
-      if (err_code < 0)
-      {
-          throw new CUBRIDException(err_code, Utils.GetStr(MsgId.ParameterNotFoundMissingPrefix));
-      }
-      */
-      connEncoding = name;
+      connEncoding = EncodingFromString(name);
     }
 
     /// <summary>
-    /// Get Encoding
     /// </summary>
-    /// <returns> Encoding</returns>
+    /// <returns> </returns>
     public Encoding GetEncoding()
     {
-        return EncodingFromString(connEncoding);
+      return connEncoding;
+    }
+
+    /// <summary>
+    /// </summary>
+    private void Reconnect()
+    {
+      // connect
+      Connect(server, port);
+
+      // send drvier information
+      int newPort = SendDriverInfo();
+
+      if (newPort < 0)
+      {
+        throw new CUBRIDException(Utils.GetStr(MsgId.InvalidConnectionPort));
+      }
+
+      if (newPort > 0)
+      {
+        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, new LingerOption(true, 1));
+        // Changed to LingerOption(true, 1)
+        socket.Close();
+
+        Connect(server, newPort);
+      }
+
+      if (connTimeout > 0)
+        stream.baseStream.ReadTimeout = connTimeout * 1000;
+
+      // send db inforamtion
+      SendDbInfo();
+      // receive broker information
+      ReceiveBrokerInfo();
+
+      // get db version
+      db_version = stream.GetDbVersion();
+
+      // Reset network stream read timeout
+      stream.baseStream.ReadTimeout = connProperties.QueryTimeout > 0 ? connProperties.QueryTimeout : Timeout.Infinite;
+
+      //Set Auto Commit option
+      //SetAutoCommit(this.autoCommit);
+
+      //Set Isolation level option
+      //TODO
+      SetIsolationLevel(isolationLevel);
+
+      //TODO
+      SetLockTimeout(lockTimeout);
+
+      //TODO
+      //Not supported yet: SetMaxStringLength
+      //SetMaxStringLength(this.maxStringLength);
+
+      SetConnectionState(ConnectionState.Open);
+    }
+
+    /// <summary>
+    ///   Connect to the CUBRID DB.
+    /// </summary>
+    /// <param name="strServer"> The host name/IP. </param>
+    /// <param name="port"> The broker port. </param>
+    private void Connect(string strServer, int port)
+    {
+      try
+      {
+        SetConnectionState(ConnectionState.Connecting);
+
+        socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.Connect(strServer, port);
+        socket.NoDelay = true;
+        stream.ClearBuffer(new NetworkStream(socket, true));
+
+        SetConnectionState(ConnectionState.Open);
+      }
+      catch (Exception e)
+      {
+        SetConnectionState(ConnectionState.Closed);
+
+        throw new CUBRIDException(e.Message);
+      }
+    }
+
+    /// <summary>
+    ///   Send Driver information to CUBRID Database.
+    /// </summary>
+    /// <returns> </returns>
+    private int SendDriverInfo()
+    {
+      try
+      {
+        stream.WriteBytesToRaw(driverInfo, 0, driverInfo.Length);
+        //this.stream.SendData(); //8.2
+        stream.Stream.Flush(); //8.4
+
+        return stream.ReadIntFromRaw();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
+    }
+
+    /// <summary>
+    ///   Receive broker information.
+    /// </summary>
+    private void ReceiveBrokerInfo()
+    {
+      try
+      {
+        stream.Receive();
+
+        brokerInfo = stream.ReadBytes(8);
+
+        //private final static int BROKER_INFO_DBMS_TYPE = 0;
+        //private final static int BROKER_INFO_KEEP_CONNECTION = 1;
+        //private final static int BROKER_INFO_STATEMENT_POOLING = 2;
+        //private final static int BROKER_INFO_CCI_PCONNECT = 3;
+        //private final static int BROKER_INFO_MAJOR_VERSION = 4;
+        //private final static int BROKER_INFO_MINOR_VERSION = 5;
+        //private final static int BROKER_INFO_PATCH_VERSION = 6;
+        //private final static int BROKER_INFO_RESERVED = 7;
+        keepConnectionAlive = (brokerInfo[1] == 1);
+        statementPooling = (brokerInfo[2] == 1);
+
+        sessionId = stream.ReadInt();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
+    }
+
+    private void SendDbInfo()
+    {
+      // see broker/cas_protocol.h
+      // #define SRV_CON_DBNAME_SIZE 32
+      // #define SRV_CON_DBUSER_SIZE 32
+      // #define SRV_CON_DBPASSWD_SIZE 32
+      // #define SRV_CON_DBSESS_ID_SIZE 20
+      // #define SRV_CON_URL_SIZE 512
+      // #define SRV_CON_DB_INFO_SIZE \
+      // (SRV_CON_DBNAME_SIZE + SRV_CON_DBUSER_SIZE +
+      // SRV_CON_DBPASSWD_SIZE + \
+      // SRV_CON_URL_SIZE + SRV_CON_DBSESS_ID_SIZE)
+      //dbInfo = new byte[32 + 32 + 32 + 512 + 20]; 96+512+20 = 96+532 = 628
+      //UJCIUtil.copy_byte(dbInfo, 0, 32, dbname);
+      //UJCIUtil.copy_byte(dbInfo, 32, 32, user);
+      //UJCIUtil.copy_byte(dbInfo, 64, 32, passwd);
+      //UJCIUtil.copy_byte(dbInfo, 96, 512, url);
+      //UJCIUtil.copy_byte(dbInfo, 608, 20, new Integer(sessionId).toString());
+
+      dbinfo = new byte[32 + 32 + 32 + 512 + 20];
+      for (int i = 0; i < 628; i++)
+      {
+        dbinfo[i] = 0;
+      }
+
+      byte[] dbBytes = Encoding.ASCII.GetBytes(database);
+      Array.Copy(dbBytes, 0, dbinfo, 0, dbBytes.Length);
+      byte[] userBytes = Encoding.ASCII.GetBytes(user);
+      Array.Copy(userBytes, 0, dbinfo, 32, userBytes.Length);
+      byte[] passBytes = Encoding.ASCII.GetBytes(password);
+      Array.Copy(passBytes, 0, dbinfo, 64, passBytes.Length);
+
+      //string url = "jdbc:cubrid:localhost:30000:demodb:public::"; //8.4 (we will use a default JDBC-type value)
+      string url = "jdbc:cubrid:" + server + ":" + port + ":" + database + ":" +
+                   user + ":********:";
+      byte[] urlBytes = Encoding.ASCII.GetBytes(url); //8.4
+      Array.Copy(urlBytes, 0, dbinfo, 96, urlBytes.Length); //8.4
+
+      try
+      {
+        stream.WriteBytesToRaw(dbinfo, 0, dbinfo.Length);
+        stream.Stream.Flush(); //8.4
+      }
+      catch (SocketException ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -765,18 +928,8 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="level"> The level. </param>
     public void SetIsolationLevel(CUBRIDIsolationLevel level)
     {
-        T_CCI_ERROR err = new T_CCI_ERROR();
-
-        if (connState != ConnectionState.Open)
-            throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-
-        int ret = CciInterface.cci_set_db_parameter(con_id, T_CCI_DB_PARAM.CCI_PARAM_ISOLATION_LEVEL, (int)level, ref err);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(err.err_code, err.err_msg);
-        }
-
-        isolationLevel = level;
+      isolationLevel = level;
+      SetDBParameter(CCIDbParam.CCI_PARAM_ISOLATION_LEVEL, (int)level);
     }
 
     /// <summary>
@@ -785,38 +938,24 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public CUBRIDIsolationLevel GetIsolationLevel()
     {
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        int level = 0;
-
-        if (connState != ConnectionState.Open)
-            throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-
-        int ret = CciInterface.cci_get_db_parameter(con_id, T_CCI_DB_PARAM.CCI_PARAM_ISOLATION_LEVEL, ref level, ref err);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(err.err_code, err.err_msg);
-        }
-        isolationLevel = (CUBRIDIsolationLevel)level;
-        return isolationLevel;
+      int level = GetDBParameter(CCIDbParam.CCI_PARAM_ISOLATION_LEVEL);
+      isolationLevel = (CUBRIDIsolationLevel)level;
+      return isolationLevel;
     }
 
     /// <summary>
-    ///   Specifies the connection lock timeout as millisecond.
+    ///   Specifies the connection lock timeout as seconds.
     /// </summary>
-    /// <param name="value"> lock timeout value(Unit: millisecond). </param>
+    /// <param name="value"> lock timeout value(Unit: seconds). </param>
     public void SetLockTimeout(int value)
     {
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        if (connState != ConnectionState.Open)
-            throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+      if (value <= 0)
+      {
+        return;
+      }
 
-        int ret = CciInterface.cci_set_db_parameter(con_id, T_CCI_DB_PARAM.CCI_PARAM_LOCK_TIMEOUT, (int)value, ref err);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(err.err_code, err.err_msg);
-        }
-
-        lockTimeout = value;
+      lockTimeout = value;
+      SetDBParameter(CCIDbParam.CCI_PARAM_LOCK_TIMEOUT, LockTimeout);
     }
 
     /// <summary>
@@ -825,21 +964,59 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> Parameter value </returns>
     public int GetLockTimeout()
     {
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        int value = 0;
-
-        if (connState != ConnectionState.Open)
-            throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-
-        int ret = CciInterface.cci_get_db_parameter(con_id, T_CCI_DB_PARAM.CCI_PARAM_LOCK_TIMEOUT, ref value, ref err);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(err.err_code, err.err_msg);
-        }
-        lockTimeout = value;
-        return lockTimeout;
+      lockTimeout = GetDBParameter(CCIDbParam.CCI_PARAM_LOCK_TIMEOUT);
+      return lockTimeout;
     }
 
+    /// <summary>
+    ///   Configures a system parameter
+    /// </summary>
+    /// <param name="param_name"> System parameter name. </param>
+    /// <param name="nValue"> Parameter value </param>
+    private void SetDBParameter(CCIDbParam param_name, int nValue)
+    {
+      if (connState != ConnectionState.Open)
+        throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_SET_DB_PARAMETER);
+        stream.WriteIntArg((int)param_name);
+        stream.WriteIntArg(nValue);
+        stream.Send();
+
+        stream.Receive();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
+    }
+
+    /// <summary>
+    ///   Gets a parameter specified in the database.
+    /// </summary>
+    /// <param name="param_name"> System parameter name. </param>
+    /// <returns> Parameter value </returns>
+    private int GetDBParameter(CCIDbParam param_name)
+    {
+      if (connState != ConnectionState.Open)
+        throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_GET_DB_PARAMETER);
+        stream.WriteIntArg((int)param_name);
+        stream.Send();
+
+        stream.Receive();
+        return stream.ReadInt();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
+    }
 
     /*
          * APIS-500: data will still be rollbacked after setting setautocommit(true)
@@ -853,33 +1030,33 @@ namespace CUBRID.Data.CUBRIDClient
       if (connState != ConnectionState.Open)
         throw new InvalidOperationException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
 
-      int ret = CciInterface.cci_set_autocommit(con_id, (CCI_AUTOCOMMIT_MODE)Convert.ToInt32(autoCommit));
-      if (ret < 0)
+      try
       {
-          throw new CUBRIDException(Utils.GetStr(MsgId.InvalidPropertyName));
+        if (autoCommit != this.autoCommit)
+        {
+          EndTransaction(CCITransactionType.CCI_TRAN_COMMIT);
+          this.autoCommit = autoCommit;
+        }
+        /*this.stream.WriteCommand(CASFunctionCode.CAS_FC_SET_DB_PARAMETER);
+                    this.stream.WriteIntArg((int)CCIDbParam.CCI_PARAM_AUTO_COMMIT);
+                    int p = autoCommit ? (int)1 : (int)0;
+                    this.stream.WriteIntArg(p);
+                    this.stream.Send();
+
+                    int res = this.stream.Receive();*/
       }
-
-      this.autoCommit = autoCommit;
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
-
 
     /// <summary>
     ///   Gets the auto commit state of the connection.
     /// </summary>
     public bool GetAutoCommit()
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
-
-        CCI_AUTOCOMMIT_MODE ret = CciInterface.cci_get_autocommit(con_id);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.InvalidPropertyName));
-        }
-
-        return Convert.ToBoolean(autoCommit);
+      return autoCommit;
     }
 
     /// <summary>
@@ -890,21 +1067,47 @@ namespace CUBRID.Data.CUBRIDClient
     {
       //TODO
       throw new NotImplementedException();
+      /*
+      try
+      {
+        this.stream.WriteCommand(CASFunctionCode.CAS_FC_SET_DB_PARAMETER);
+        this.stream.WriteIntArg((int)CCIDbParam.CCI_PARAM_MAX_STRING_LENGTH);
+        this.stream.WriteIntArg(val);
+        this.stream.Send();
+
+        int res = this.stream.Receive();
+        this.maxStringLength = val;
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
+      */
     }
 
     /// <summary>
     ///   Gets the length of the max string.
     /// </summary>
-    public int GetMaxStringLength()
+    public void GetMaxStringLength()
     {
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        int value = 0;
-        int ret = CciInterface.cci_get_db_parameter(con_id, T_CCI_DB_PARAM.CCI_PARAM_MAX_STRING_LENGTH, ref value, ref err);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(err.err_code, err.err_msg);
-        }
-        return value;
+      //TODO
+      throw new NotImplementedException();
+      /*
+      try
+      {
+        this.stream.WriteCommand(CASFunctionCode.CAS_FC_GET_DB_PARAMETER);
+        this.stream.WriteIntArg((int)CCIDbParam.CCI_PARAM_MAX_STRING_LENGTH);
+        this.stream.Send();
+
+        int res = this.stream.Receive();
+        int val = this.stream.ReadInt();
+        this.maxStringLength = val;
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
+      */
     }
 
     /// <summary>
@@ -914,23 +1117,14 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public int BatchExecuteNoQuery(string[] sqls)
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
-        if (sqls == null || sqls.Length == 0)
-        {
-            return 0;
-        }
-
-        T_CCI_QUERY_RESULT[] query_result = null;
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int n_executed = CciInterface.cci_execute_batch(con_id, sqls, ref query_result, ref err_buf);
-        if (n_executed < 0)
-        {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
-        }
-        return n_executed;
+      try
+      {
+        return stream.RequestBatchExecute(sqls, autoCommit);
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -938,19 +1132,8 @@ namespace CUBRID.Data.CUBRIDClient
     /// </summary>
     public void Commit()
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
-
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        int ret = CciInterface.cci_end_tran(con_id, (char)CCI_TRAN_MODE.CCI_TRAN_COMMIT, ref err);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(err.err_code,err.err_msg);
-        }
-
-        SetAutoCommit(true);
+      EndTransaction(CCITransactionType.CCI_TRAN_COMMIT);
+      autoCommit = true;
     }
 
     /// <summary>
@@ -958,21 +1141,62 @@ namespace CUBRID.Data.CUBRIDClient
     /// </summary>
     public void Rollback()
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
-
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        int ret = CciInterface.cci_end_tran(con_id, (char)CCI_TRAN_MODE.CCI_TRAN_ROLLBACK, ref err);
-        if (ret < 0)
-        {
-            throw new CUBRIDException(err.err_code, err.err_msg);
-        }
-
-        SetAutoCommit(true);
+      EndTransaction(CCITransactionType.CCI_TRAN_ROLLBACK);
+      autoCommit = true;
     }
 
+    private void EndTransaction(CCITransactionType type)
+    {
+      stream.ClearBuffer();
+
+      stream.WriteCommand(CASFunctionCode.CAS_FC_END_TRAN);
+      stream.WriteByteArg((byte)type);
+
+      stream.Send();
+
+      if (type == CCITransactionType.CCI_TRAN_COMMIT || type == CCITransactionType.CCI_TRAN_ROLLBACK)
+      {
+        stream.Receive();
+      }
+
+      if (!keepConnectionAlive)
+      {
+        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, new LingerOption(true, 1));
+        // Changed SocketOptionLevel from 'Tcp' to 'Socket' and changed 'true' to LingerOption(true, 1)
+        socket.Close();
+        socket = null;
+        SetConnectionState(ConnectionState.Closed);
+      }
+    }
+
+    internal bool CloseInternal()
+    {
+      try
+      {
+        if (socket != null)
+        {
+          stream.ClearBuffer();
+
+          stream.WriteCommand(CASFunctionCode.CAS_FC_CON_CLOSE);
+          stream.Send();
+          stream.Receive();
+
+          socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, new LingerOption(true, 1));
+          // Changed to LingerOption(true, 1)
+          socket.Close();
+          socket = null;
+          SetConnectionState(ConnectionState.Closed);
+        }
+        return true;
+      }
+      catch (Exception ex)
+      {
+        Trace.WriteLineIf(Utils.TraceState,
+                          String.Concat("Error occurred aborting the conn. Exception was: ", ex.Message));
+
+        return false;
+      }
+    }
 
     /// <summary>
     ///   Gets the table name from OID.
@@ -981,41 +1205,65 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public string GetTableNameFromOID(string oidStr)
     {
-        if (State == ConnectionState.Closed)
+      try
+      {
+        int res = 0;
+
+        if (socket != null)
         {
-          throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+          CUBRIDOid cubridOid = new CUBRIDOid(oidStr);
+          stream.ClearBuffer();
+
+          stream.WriteCommand(CASFunctionCode.CAS_FC_OID_CMD);
+          stream.WriteByteArg((byte)OidCommand.GET_CLASS_NAME_BY_OID);
+          stream.WriteOidArg(cubridOid);
+          stream.Send();
+
+          res = stream.Receive();
         }
-        byte[] buf = new byte[1024];
-        T_CCI_ERROR err = new T_CCI_ERROR();
-        int ret = CciInterface.cci_oid_get_class_name(con_id, oidStr, buf, 1024, ref err);
-        if (ret < 0)
+
+        if (res >= 0)
         {
-            throw new CUBRIDException(err.err_code, err.err_msg);
+          string tablename = stream.ReadString(stream.RemainedCapacity(), GetEncoding());
+
+          return tablename;
         }
-        return Encoding.UTF8.GetString(buf).TrimEnd('\0');
+
+        return null;
+      }
+      catch (Exception ex)
+      {
+        Trace.WriteLineIf(Utils.TraceState, "Exception occured: " + ex.Message);
+        return null;
+      }
     }
+
+    internal void ReconnectIfNeeded()
+    {
+      if (socket == null)
+      {
+        Reconnect();
+      }
+    }
+
     /// <summary>
     ///   Gets the current database.
     /// </summary>
     /// <returns> </returns>
     public string CurrentDatabase()
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
-        if (!string.IsNullOrEmpty(Database))
-            return Database;
+      if (!string.IsNullOrEmpty(Database))
+        return Database;
 
-        using (CUBRIDCommand cmd = new CUBRIDCommand("select database()", this))
+      using (CUBRIDCommand cmd = new CUBRIDCommand("select database()", this))
+      {
+        object _obj = cmd.ExecuteScalar();
+        if (_obj != null)
         {
-            object _obj = cmd.ExecuteScalar();
-            if (_obj != null)
-            {
-                return _obj.ToString();
-            }
+          return _obj.ToString();
         }
-        return string.Empty;
+      }
+      return string.Empty;
     }
 
 
@@ -1027,17 +1275,29 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="value"> The value. </param>
     public void AddElementToSet(CUBRIDOid oid, String attributeName, Object value)
     {
-        if (State == ConnectionState.Closed)
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_COLLECTION);
+        stream.WriteByteArg((byte)CUBRIDCollectionCommand.ADD_ELEMENT_TO_SET);
+        stream.WriteOidArg(oid);
+        if (attributeName == null)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+          stream.WriteNullArg();
         }
+        else
+        {
+          stream.WriteStringArg(attributeName, GetEncoding());
+        }
+        CUBRIDParameter p = new CUBRIDParameter(attributeName, value);
+        p.Write(stream);
+        stream.Send();
 
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int req = CciInterface.cci_col_set_add(Conection, oid.Get_OidStr(), attributeName, value.ToString(), ref err_buf);
-        if (req < 0)
-        {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
-        }
+        stream.Receive();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -1048,18 +1308,24 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="value"> The value. </param>
     public void DropElementInSet(CUBRIDOid oid, String attributeName, Object value)
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_COLLECTION);
+        stream.WriteByteArg((byte)CUBRIDCollectionCommand.DROP_ELEMENT_IN_SET);
+        stream.WriteOidArg(oid);
+        stream.WriteStringArg(attributeName, GetEncoding());
+        CUBRIDParameter p = new CUBRIDParameter(attributeName, value);
+        p.Write(stream);
+        stream.Send();
 
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int req = CciInterface.cci_col_set_drop(Conection, oid.Get_OidStr(), attributeName, value.ToString(), ref err_buf);
-        if (req < 0)
-        {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
-        }
+        stream.Receive();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
+
     /// <summary>
     ///   Adds the element in sequence.
     /// </summary>
@@ -1069,17 +1335,31 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="value"> The value. </param>
     public void UpdateElementInSequence(CUBRIDOid oid, String attributeName, int index, Object value)
     {
-        if (State == ConnectionState.Closed)
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_COLLECTION);
+        stream.WriteByteArg((byte)CUBRIDCollectionCommand.PUT_ELEMENT_ON_SEQUENCE);
+        stream.WriteOidArg(oid);
+        stream.WriteIntArg(index);
+        if (attributeName == null)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+          stream.WriteNullArg();
         }
+        else
+        {
+          stream.WriteStringArg(attributeName, GetEncoding());
+        }
+        CUBRIDParameter p = new CUBRIDParameter(attributeName, CUBRIDDataType.CCI_U_TYPE_INT);
+        p.Value = value;
+        p.Write(stream);
+        stream.Send();
 
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int req = CciInterface.cci_col_seq_put(Conection, oid.Get_OidStr(), attributeName, index, value.ToString(), ref err_buf);
-        if (req < 0)
-        {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
-        }
+        stream.Receive();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -1091,17 +1371,30 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="value"> The value. </param>
     public void InsertElementInSequence(CUBRIDOid oid, String attributeName, int index, Object value)
     {
-        if (State == ConnectionState.Closed)
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_COLLECTION);
+        stream.WriteByteArg((byte)CUBRIDCollectionCommand.INSERT_ELEMENT_INTO_SEQUENCE);
+        stream.WriteOidArg(oid);
+        stream.WriteIntArg(index);
+        if (attributeName == null)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+          stream.WriteNullArg();
         }
+        else
+        {
+          stream.WriteStringArg(attributeName, GetEncoding());
+        }
+        CUBRIDParameter p = new CUBRIDParameter(attributeName, value);
+        p.Write(stream);
+        stream.Send();
 
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int req = CciInterface.cci_col_seq_insert(Conection, oid.Get_OidStr(), attributeName, index, value.ToString(), ref err_buf);
-        if (req < 0)
-        {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
-        }
+        stream.Receive();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -1112,17 +1405,29 @@ namespace CUBRID.Data.CUBRIDClient
     /// <param name="index"> The index. </param>
     public void DropElementInSequence(CUBRIDOid oid, String attributeName, int index)
     {
-        if (State == ConnectionState.Closed)
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_COLLECTION);
+        stream.WriteByteArg((byte)CUBRIDCollectionCommand.DROP_ELEMENT_IN_SEQUENCE);
+        stream.WriteOidArg(oid);
+        stream.WriteIntArg(index);
+        if (attributeName == null)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+          stream.WriteNullArg();
+        }
+        else
+        {
+          stream.WriteStringArg(attributeName, GetEncoding());
         }
 
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int req = CciInterface.cci_col_seq_drop(Conection, oid.Get_OidStr(), attributeName, index, ref err_buf);
-        if (req < 0)
-        {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
-        }
+        stream.Send();
+
+        stream.Receive();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -1133,18 +1438,29 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public int GetCollectionSize(CUBRIDOid oid, String attributeName)
     {
-        if (State == ConnectionState.Closed)
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_COLLECTION);
+        stream.WriteByteArg((byte)CUBRIDCollectionCommand.GET_SIZE_OF_COLLECTION);
+        stream.WriteOidArg(oid);
+        if (attributeName == null)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+          stream.WriteNullArg();
         }
-        int size = 0;
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int req = CciInterface.cci_col_size(Conection, oid.Get_OidStr(), attributeName, ref size, ref err_buf);
-        if (req < 0)
+        else
         {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
+          stream.WriteStringArg(attributeName, GetEncoding());
         }
-        return size;
+        stream.Send();
+
+        stream.Receive();
+
+        return stream.ReadInt();
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -1154,28 +1470,29 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> </returns>
     public String GetQueryPlanOnly(String sql)
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
+      if (String.IsNullOrEmpty(sql))
+        return null;
 
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int req = CciInterface.cci_prepare(this, sql, ref err_buf);
-        if (req < 0)
-        {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
-        }
+      try
+      {
+        //outBuffer.newRequest(UFunctionCode.GET_QUERY_INFO);
+        //outBuffer.addInt(0);
+        //outBuffer.addByte(UStatement.QUERY_INFO_PLAN);
+        //outBuffer.addStringWithNull(sql); 
+        stream.WriteCommand(CASFunctionCode.CAS_FC_GET_QUERY_INFO);
+        stream.WriteIntArg(0);
+        stream.WriteByteArg(1);
+        stream.WriteStringArg(sql, GetEncoding());
+        stream.Send();
 
-        IntPtr query_buf_p = IntPtr.Zero;
-        string query_plan = CciInterface.cci_get_query_plan(req, ref query_buf_p);
+        stream.Receive();
 
-        int res = CciInterface.cci_query_info_free(query_buf_p);
-        if (res < 0)
-        {
-            throw new CUBRIDException(res);
-        }
-
-        return query_plan;
+        return stream.ReadString(stream.RemainedCapacity(), GetEncoding());
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -1185,12 +1502,21 @@ namespace CUBRID.Data.CUBRIDClient
     [MethodImpl(MethodImplOptions.Synchronized)]
     public String GetDatabaseProductVersion()
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_GET_DB_VERSION);
+        stream.WriteByteArg(AutoCommit ? (byte)1 : (byte)0);
+        stream.Send();
 
-        return CciInterface.cci_get_db_version(this, 64); ;
+        stream.Receive();
+        int len = stream.RemainedCapacity();
+
+        return stream.ReadString(len, GetEncoding());
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     /// <summary>
@@ -1198,115 +1524,84 @@ namespace CUBRID.Data.CUBRIDClient
     /// </summary>
     /// <param name="lob_type"> The LOB type. </param>
     /// <returns> The packed LOB handle. </returns>
-    public IntPtr LOBNew(CUBRIDDataType lob_type)
+    public byte[] LOBNew(CUBRIDDataType lob_type)
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
+      if (lob_type != CUBRIDDataType.CCI_U_TYPE_BLOB && lob_type != CUBRIDDataType.CCI_U_TYPE_CLOB)
+      {
+        throw new ArgumentException(Utils.GetStr(MsgId.NotAValidLOBType));
+      }
 
-        IntPtr packedLobHandle = IntPtr.Zero;
-        T_CCI_ERROR err = new T_CCI_ERROR();
+      stream.WriteCommand(CASFunctionCode.CAS_FC_LOB_NEW);
+      stream.WriteIntArg((int)lob_type);
 
-        if (lob_type == CUBRIDDataType.CCI_U_TYPE_BLOB)
-        {
-            int res = CciInterface.cci_blob_new(con_id, ref packedLobHandle, ref err);
-            if (res < 0)
-            {
-                throw new CUBRIDException(err.err_code, err.err_msg);
-            }
-        }
-        else if (lob_type == CUBRIDDataType.CCI_U_TYPE_CLOB)
-        {
-            int res = CciInterface.cci_clob_new(con_id, ref packedLobHandle, ref err);
-            if (res < 0)
-            {
-                throw new CUBRIDException(err.err_code, err.err_msg);
-            }
-        }
-        else
-        {
-            throw new ArgumentException(Utils.GetStr(MsgId.NotAValidLOBType));
-        }
-        return packedLobHandle;
+      stream.Send();
+
+      int res = stream.Receive();
+      if (res < 0)
+      {
+        return null;
+      }
+
+      byte[] packedLobHandle = new byte[res];
+      stream.ReadBytes(packedLobHandle);
+
+      return packedLobHandle;
     }
 
     /// <summary>
     ///   LOB read.
     /// </summary>
-    /// <param name="Lob"> CUBRIDClob or CUBRIDBlob object. </param>
+    /// <param name="packedLobHandle"> The packed LOB handle. </param>
     /// <param name="offset"> The offset. </param>
     /// <param name="buf"> The buffer. </param>
     /// <param name="start"> The start positon. </param>
     /// <param name="len"> The length. </param>
     /// <returns> </returns>
-    public int LOBRead(object Lob, long offset, byte[] buf, int start, int len)
+    public int LOBRead(byte[] packedLobHandle, long offset, byte[] buf, int start, int len)
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
+      stream.WriteCommand(CASFunctionCode.CAS_FC_LOB_READ);
+      stream.WriteBytesArg(packedLobHandle);
+      stream.WriteLongArg(offset);
+      stream.WriteIntArg(len);
+      stream.Send();
 
-        len = len < buf.Length - start ? len : buf.Length - start;
-        byte[] byteArray;
+      int res = stream.Receive();
+      if (res < 0)
+      {
+        throw new CUBRIDException(CUBRIDException.CUBRIDErrorCode.ER_UNKNOWN,
+                                  Utils.GetStr(MsgId.ErrorWrittingLOBContent));
+      }
 
-        if (Lob.GetType().Name == "CUBRIDClob")
-        {
-            CUBRIDClob clob = (CUBRIDClob)Lob;
-            byteArray = System.Text.Encoding.Default.GetBytes(clob.GetString(offset, len));
-        }
-        else if (Lob.GetType().Name == "CUBRIDBlob")
-        {
-            CUBRIDBlob blob = (CUBRIDBlob)Lob;
-            byteArray = blob.GetBytes(offset, len);
-        }
-        else
-        {
-            throw new ArgumentException(Utils.GetStr(MsgId.NotAValidLOBType));
-        }
+      stream.ReadBytes(buf, start, res);
 
-        Array.Copy(byteArray, 0, buf, start, len);
-
-        return byteArray.Length;
+      return res;
     }
 
     /// <summary>
     ///   LOB write.
     /// </summary>
-    /// <param name="Lob">CUBRIDClob or CUBRIDBlob object. </param>
+    /// <param name="packedLobHandle"> The packed LOB handle. </param>
     /// <param name="offset"> The offset. </param>
     /// <param name="buf"> The buffer. </param>
     /// <param name="start"> The start position. </param>
     /// <param name="len"> The length. </param>
     /// <returns> </returns>
-    public long LOBWrite(object Lob, ulong offset, byte[] buf, int start, int len)
+    public int LOBWrite(byte[] packedLobHandle, long offset, byte[] buf, int start, int len)
     {
-        if (State == ConnectionState.Closed)
-        {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
+      stream.WriteCommand(CASFunctionCode.CAS_FC_LOB_WRITE);
+      stream.WriteBytesArg(packedLobHandle);
+      stream.WriteLongArg(offset);
+      stream.WriteBytesArg(buf, start, len);
+      stream.Send();
 
-        long res = 0;
-        len = len < buf.Length - start ? len : buf.Length - start;
-        byte[] byteArray = new byte[len];
-        Array.Copy(buf, start, byteArray, 0, len);
+      int res = stream.Receive();
+      if (res < 0)
+      {
+        throw new CUBRIDException(CUBRIDException.CUBRIDErrorCode.ER_UNKNOWN,
+                                  Utils.GetStr(MsgId.ErrorWrittingLOBContent));
+      }
 
-        if (Lob.GetType().Name == "CUBRIDClob")
-        {
-            CUBRIDClob clob = (CUBRIDClob)Lob;
-            res = clob.SetString(offset, System.Text.Encoding.Default.GetString(byteArray));
-        }
-        else if (Lob.GetType().Name == "CUBRIDBlob")
-        {
-            CUBRIDBlob blob = (CUBRIDBlob)Lob;
-            res = blob.SetBytes(offset, byteArray);
-        }
-        else
-        {
-            throw new ArgumentException(Utils.GetStr(MsgId.NotAValidLOBType));
-        }
-
-        return res;
+      return res;
     }
 
     /// <summary>
@@ -1316,111 +1611,88 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> CUBRIDBatchResult </returns>
     public CUBRIDBatchResult BatchExecute(string[] batchSqlStmt)
     {
-        if (State == ConnectionState.Closed)
+      if (batchSqlStmt == null || batchSqlStmt.Length == 0)
+        return null;
+
+      try
+      {
+        stream.WriteCommand(CASFunctionCode.CAS_FC_EXECUTE_BATCH);
+        stream.WriteByteArg(AutoCommit ? (byte)1 : (byte)0);
+
+        foreach (string t in batchSqlStmt)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
-        }
-        if (batchSqlStmt == null || batchSqlStmt.Length == 0)
-        {
-            return null;
+          if (t != null)
+            stream.WriteStringArg(t, GetEncoding());
+          else
+            stream.WriteNullArg();
         }
 
-        T_CCI_QUERY_RESULT[] query_result = null;
-        T_CCI_ERROR err_buf = new T_CCI_ERROR();
-        int n_executed = CciInterface.cci_execute_batch(con_id, batchSqlStmt, ref query_result, ref err_buf);
-        if (n_executed < 0)
+        stream.Send();
+        stream.Receive();
+
+        CUBRIDBatchResult batchResult = new CUBRIDBatchResult(stream.ReadInt());
+        for (int i = 0; i < batchResult.Count(); i++)
         {
-            throw new CUBRIDException(err_buf.err_code, err_buf.err_msg);
+          batchResult.setStatementType(i, stream.ReadByte());
+          int result = stream.ReadInt();
+          if (result < 0)
+          {
+            batchResult.setResultError(i, result, stream.ReadString(stream.ReadInt(), connEncoding));
+          }
+          else
+          {
+            batchResult.setResultCode(i, result);
+            stream.ReadInt(); //TODO Document value
+            stream.ReadShort(); //TODO Document value
+            stream.ReadShort(); //TODO Document value
+          }
         }
-        else 
-        {
-            CUBRIDBatchResult batchResult = new CUBRIDBatchResult(n_executed);
-            for (int i = 0; i < n_executed; i++) 
-            {
-                batchResult.setStatementType(i, query_result[i].stmt_type);
-                int result = query_result[i].result_count;
-                if (result < 0)
-                {
-                    batchResult.setResultError(i, result, query_result[i].err_msg);
-                }
-                else 
-                {
-                    batchResult.setResultCode(i, result);
-                }
-            }
-            return batchResult;
-        }
+
+        return batchResult;
+      }
+      catch (Exception ex)
+      {
+        throw new CUBRIDException(ex.Message);
+      }
     }
 
     #region GetSchema Support
 
     /// <summary>
-    ///   Get the meta data of the supported collection names.
+    ///   Returns schema information for the data source of this <see cref="DbConnection" />.
     /// </summary>
-    /// <returns>A <see cref="DataTable" /> that contains the meta data of supported collection names, columns={"CollectionName", "NumberOfRestrictions"} </returns>
+    /// <returns> A <see cref="DataTable" /> that contains schema information. </returns>
     public override DataTable GetSchema()
     {
       throw new CUBRIDException(Utils.GetStr(MsgId.NotSupportedInCUBRID));
+      //return GetSchema(null);
     }
 
     /// <summary>
-    ///   Returns schema information for the data source of this <see cref="DbConnection" /> using the specified string for the schema name. <para/>
-    ///   Be equivalent to <see cref="GetSchema(string, string[])"/>
+    ///   Returns schema information for the data source of this 
+    ///   <see cref="DbConnection" /> using the specified string for the schema name.
     /// </summary>
-    /// <param name="collectionName">Specifies the name of the schema to return.</param>
+    /// <paramList name="collectionName">Specifies the name of the schema to return.</paramList>
     /// <returns> A <see cref="DataTable" /> that contains schema information. </returns>
-    /// <exception cref="System.ArgumentException">collectionName is specified as null.</exception>
     public override DataTable GetSchema(string collectionName)
     {
       return GetSchema(collectionName, null);
     }
 
     /// <summary>
-    ///   Returns schema information for the data source of this <see cref="DbConnection" /><para/>
-    ///   using the specified string for the schema name and the specified string array <para/>
+    ///   Returns schema information for the data source of this <see cref="DbConnection" />
+    ///   using the specified string for the schema name and the specified string array 
     ///   for the restriction values.
     /// </summary>
-    /// <param name="collectionName"> Specifies the name of the schema to return. It could be any of the following name:<para/>
-    /// <list type="bullet"><item>MetaDataCollections<para/></item><item>RESERVEDWORDS<para/></item><item>USERS<para/></item><item>DATABASES<para/></item><item>PROCEDURES<para/></item><item>TABLES<para/></item><item>VIEWS<para/></item>
-    /// <item>COLUMNS<para/></item><item>INDEXES<para/></item><item>INDEX_COLUMNS<para/></item><item>FOREIGN_KEYS<para/></item>
-    /// </list>
-    /// </param>
-    /// <param name="filters"> 
-    /// Specifies a set of restriction values for the requested schema. It can supply n depth of values. For different <paramref name="collectionName"/>, the value is different.<para/>
-    /// <list>
-    /// <item>MetaDataCollections: <paramref name="filters"/> = null <para/></item>
-    /// <item>RESERVEDWORDS: <paramref name="filters"/> = null <para/></item>
-    /// <item>USERS: <paramref name="filters"/> = {"user name pattern"} <para/></item>
-    /// <item>DATABASES: <paramref name="filters"/> = {"database name pattern"} <para/></item>
-    /// <item>PROCEDURES: <paramref name="filters"/> = {"procedure name pattern"} <para/></item>
-    /// <item>TABLES: <paramref name="filters"/> = {"table name"} <para/></item>
-    /// <item>VIEWS: <paramref name="filters"/> = {"view name pattern"} <para/></item>
-    /// <item>COLUMNS: <paramref name="filters"/> = {"table name pattern", "column name pattern"} <para/></item>
-    /// <item>INDEXES: <paramref name="filters"/> = {"table name pattern", "column name pattern", "index name pattern"} <para/></item>
-    /// <item>INDEX_COLUMNS: <paramref name="filters"/> = {"table name pattern", "index name pattern"} <para/></item>
-    /// <item>FOREIGN_KEYS: <paramref name="filters"/> = {"table name pattern", "foreign key name pattern"} <para/></item>
-    /// </list>
-    /// </param>
-    /// <returns> A <see cref="DataTable" /> that contains schema information. For different <paramref name="collectionName"/>, the columns are different. 
-    /// <list>
-    /// <item>RESERVEDWORDS: columns={<see cref="DbMetaDataColumnNames.ReservedWord"/>}<para/></item>
-    /// <item>USERS: columns={"USERNAME"}<para/></item>
-    /// <item>DATABASES: columns={"CATALOG_NAME", "SCHEMA_NAME"}<para/></item>
-    /// <item>PROCEDURES: columns={"PROCEDURE_NAME", "PROCEDURE_TYPE", "RETURN_TYPE", "ARGUMENTS_COUNT", "LANGUAGE", "TARGET", "OWNER"}<para/></item>
-    /// <item>TABLES: columns={"TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME"}<para/></item>
-    /// <item>VIEWS: columns={"VIEW_CATALOG", "VIEW_SCHEMA", "VIEW_NAME"}<para/></item>
-    /// <item>COLUMNS: columns={"TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "COLUMN_NAME", "ORDINAL_POSITION", "COLUMN_DEFAULT", "DATA_TYPE", "NUMERIC_PRECISION", "NUMERIC_SCALE", "CHARACTER_SET"}<para/></item>
-    /// <item>INDEXES:columns={"INDEX_CATALOG", "INDEX_SCHEMA", "INDEX_NAME", "TABLE_NAME", "UNIQUE", "REVERSE", "PRIMARY", "FOREIGN_KEY", "DIRECTION"}<para/></item>
-    /// <item>INDEX_COLUMNS: columns={"INDEX_CATALOG", "INDEX_SCHEMA", "INDEX_NAME", "TABLE_NAME", "COLUMN_NAME", "ORDINAL_POSITION", "DIRECTION"}<para/></item>
-    /// <item>FOREIGN_KEYS: columns={"PKTABLE_NAME", "PKCOLUMN_NAME", "FKTABLE_NAME", "FKCOLUMN_NAME", "KEY_SEQ", "UPDATE_ACTION", "DELETE_ACTION", "FK_NAME", "PK_NAME"}<para/></item>
-    /// </list>
-    /// </returns>
-    /// <exception cref="System.ArgumentException">collectionName is specified as null.</exception>
+    /// <param name="collectionName"> Specifies the name of the schema to return. </param>
+    /// <param name="filters"> Specifies a set of restriction values for the requested schema. </param>
+    /// <returns> A <see cref="DataTable" /> that contains schema information. </returns>
     public override DataTable GetSchema(string collectionName, string[] filters)
     {
       if (collectionName == null)
       {
-        throw new ArgumentException(Utils.GetStr(MsgId.collectionNameIsNull));
+        throw new Exception(Utils.GetStr(MsgId.collectionNameIsNull));
+        //return null; //if no collection name is specified, we return null
       }
 
       if (SchemaProvider != null)

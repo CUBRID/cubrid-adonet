@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ArgumentMustBeCUBRIDParameter" xml:space="preserve">
     <value>Argument must be of type CUBRIDParameter</value>
@@ -257,20 +257,5 @@
   </data>
   <data name="collectionNameIsNull" xml:space="preserve">
     <value>The collectionName is specified as null.</value>
-  </data>
-  <data name="ConnectFailed" xml:space="preserve">
-    <value>Connect failed</value>
-  </data>
-  <data name="ConnectionStringIsNULL" xml:space="preserve">
-    <value>Connection string is null</value>
-  </data>
-  <data name="ConnectionMustBeValidAndOpenToRollBack" xml:space="preserve">
-    <value>Connection must be valid and open to rollback transaction</value>
-  </data>
-  <data name="ServerIsEmpty" xml:space="preserve">
-    <value>The Server can't be empty</value>
-  </data>
-  <data name="UserIsEmpty" xml:space="preserve">
-    <value>The User can't be empty</value>
   </data>
 </root>

@@ -33,42 +33,32 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   /// <summary>
   /// Implementation of test cases for the CUBRID ADO.NET Data Provider
   /// </summary>
   public partial class TestCases
   {
-    private const string connString = "server=test-db-server;database=demodb;port=33000;user=dba;password=";
-    private const string ip = "test-db-server";
+    private const string connString = "server=localhost;database=demodb;port=33000;user=public;password=";
+
     static int executed = 0;
     static int passed = 0;
     static int testCasesCount = 0;
-    static CUBRIDConnection conn = new CUBRIDConnection();
 
     //Specify the REGEX name patterns for the test cases to be executed
     //static string[] runFilters = new string[] { @"\w+" }; // "\w+" means: Match any test case name  
 
     //Specify what test cases to execute (use a regular expression):
 
-    static bool matchExactName = false; //set to False if you want the runFilters to match ALL test cases with names that begin with ...
-    static string[] runFilters = new string[] { @"Test_Blob_FromFile" };
+    static bool matchExactName = true; //set to False if you want the runFilters to match ALL test cases with names that begin with ...
+    static string[] runFilters = new string[] { @"Test_SequenceOperations" };
 
     /* Documentation and examples for using ADO.NET:
     http://msdn.microsoft.com/en-us/library/e80y5yhx%28v=VS.80%29.aspx
     */
-    public static void Test_init()
-    {
-        conn.ConnectionString = TestCases.connString;
-        conn.SetConnectionTimeout(300);
-        conn.Open();
-    }
-    public static void Test_dinit()
-    {
-        conn.Close();
-    }
-    public static void Run()
+
+    public static void Main(string[] args)
     {
       Console.WriteLine("Test cases execution started...");
       Console.WriteLine();
@@ -119,7 +109,7 @@ namespace Test.Functional
       TestCases.Run(TestCases.Test_BatchExecuteNoQuery);
       TestCases.Run(TestCases.Test_CUBRIDException);
       TestCases.Run(TestCases.Test_OID_Get);
-      //TestCases.Run(TestCases.Test_GetGeneratedKeys);
+      TestCases.Run(TestCases.Test_GetGeneratedKeys);
       TestCases.Run(TestCases.Test_ExecuteNonQuery_Query);
       TestCases.Run(TestCases.Test_Oid_Basic);
       TestCases.Run(TestCases.Test_DateTime_Types);
@@ -208,6 +198,9 @@ namespace Test.Functional
       }
       Console.ResetColor();
       Console.WriteLine();
+
+      Console.WriteLine("Press any key to continue...");
+      Console.ReadKey();
     }
 
     #region Helpers
@@ -400,7 +393,7 @@ namespace Test.Functional
         foreach (string regexFilter in TestCases.runFilters)
         {
           Match match = Regex.Match(testCaseName, regexFilter, RegexOptions.IgnoreCase);
-          if (TestCases.matchExactName == false || (match.Success &&(TestCases.matchExactName && testCaseName == regexFilter)))
+          if (match.Success && (TestCases.matchExactName == false || (TestCases.matchExactName && testCaseName == regexFilter)))
           {
             Console.WriteLine("Executing: [" + testCaseName + "]" + "...");
             executed++;

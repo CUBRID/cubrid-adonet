@@ -3,7 +3,7 @@ using System.Data;
 using System.Diagnostics;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -287,7 +287,7 @@ namespace Test.Functional
 
         string queryPlan = conn.GetQueryPlanOnly("select * from athlete order by 1 desc");
 
-        Debug.Assert(queryPlan == "Join graph segments (f indicates final):\nseg[0]: [0]\nseg[1]: code[0] (f)\nseg[2]: name[0] (f)\nseg[3]: gender[0] (f)\nseg[4]: nation_code[0] (f)\nseg[5]: event[0] (f)\nJoin graph nodes:\nnode[0]: athlete athlete(6677/27) (sargs 0)\nJoin graph terms:\nterm[0]: athlete.code range (-2147483648 ge_inf max) (sel 1) (rank 2) (sarg term) (not-join eligible) (indexable code[0]) (loc 0)\n\nQuery plan:\n\niscan\n    class: athlete node[0]\n    index: pk_athlete_code term[0] (desc_index)\n    sort:  1 asc\n    cost:  92 card 6677\n\nQuery stmt:\n\nselect athlete.code, athlete.[name], athlete.gender, athlete.nation_code, athlete.event from athlete athlete where (athlete.code>=-2147483648) order by 1 desc \n\n/* ---> skip ORDER BY */\n");
+        Debug.Assert(queryPlan == "Join graph segments (f indicates final):\r\nseg[0]: [0]\r\nseg[1]: code[0] (f)\r\nseg[2]: name[0] (f)\r\nseg[3]: gender[0] (f)\r\nseg[4]: nation_code[0] (f)\r\nseg[5]: event[0] (f)\r\nJoin graph nodes:\r\nnode[0]: athlete athlete(6677/27) (sargs 0)\r\nJoin graph terms:\r\nterm[0]: athlete.code range (-2147483648 ge_inf max) (sel 1) (rank 2) (sarg term) (not-join eligible) (indexable code[0]) (loc 0)\r\n\r\nQuery plan:\r\n\r\niscan\r\n    class: athlete node[0]\r\n    index: pk_athlete_code term[0] (desc_index)\r\n    sort:  1 asc\r\n    cost:  92 card 6677\r\n\r\nQuery stmt:\r\n\r\nselect athlete.code, athlete.[name], athlete.gender, athlete.nation_code, athlete.event from athlete athlete where (athlete.code>=-2147483648) order by 1 desc \r\n\r\n/* ---> skip ORDER BY */\r\n");
       }
     }
 

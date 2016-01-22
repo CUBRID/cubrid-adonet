@@ -42,7 +42,7 @@ namespace CUBRID.Data.CUBRIDClient
     ///   The size of the OID in CUBRID
     /// </summary>
     public const int OID_BYTE_SIZE = 8;
-    private string oid_str = null;
+
     private readonly byte[] oid;
 
     /// <summary>
@@ -134,16 +134,6 @@ namespace CUBRID.Data.CUBRIDClient
       return "OID:@" + IPAddress.NetworkToHostOrder(BitConverter.ToInt32(oid, 0))
              + "|" + IPAddress.NetworkToHostOrder(BitConverter.ToInt16(oid, 4))
              + "|" + IPAddress.NetworkToHostOrder(BitConverter.ToInt16(oid, 6));
-    }
-    /// <summary>
-    ///   Returns a <see cref="System.String" /> that represents this instance.
-    /// </summary>
-    /// <returns> A <see cref="System.String" /> that represents this instance. </returns>
-    public  string Get_OidStr()
-    {
-        return "@"  + IPAddress.NetworkToHostOrder(BitConverter.ToInt32(oid, 0))
-               + "|" + IPAddress.NetworkToHostOrder(BitConverter.ToInt16(oid, 4))
-               + "|" + IPAddress.NetworkToHostOrder(BitConverter.ToInt16(oid, 6));
     }
   }
 }

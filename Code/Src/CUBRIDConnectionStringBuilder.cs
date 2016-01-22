@@ -154,7 +154,7 @@ namespace CUBRID.Data.CUBRIDClient
     [Category("Connection")]
     [DisplayName("Server")]
     [Description("Server address")]
-    [DefaultValue("test-db-server")]
+    [DefaultValue("localhost")]
     [RefreshProperties(RefreshProperties.All)]
     public string Server
     {

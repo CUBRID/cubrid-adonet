@@ -67,18 +67,8 @@ namespace CUBRID.Data.CUBRIDClient
     */
 
     private readonly List<CUBRIDParameter> paramList = new List<CUBRIDParameter>();
-    private Encoding parametersEncoding = null;
-    private string cmdText = null;
+    private Encoding parametersEncoding = Encoding.Default;
 
-    /// <summary>
-    ///   Gets or sets the text command to run against the data source.
-    /// </summary>
-    /// <returns> The command SQL statement to execute. </returns>
-    public string sql
-    {
-        get { return cmdText; }
-        set { cmdText = value; }
-    }
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDParameterCollection" /> class.
     /// </summary>
@@ -267,36 +257,10 @@ namespace CUBRID.Data.CUBRIDClient
       if (paramList.Contains(parameter))
         throw new ArgumentException(Utils.GetStr(MsgId.ParameterAlreadyAdded));
 
-      if (parameter.GetParameterEncoding() == null)
-        parameter.SetParameterEncoding(GetParametersEncoding());
+      parameter.SetParameterEncoding(GetParametersEncoding());
 
-      try
-      {
-          parameter.Pos = cmdText.IndexOf(parameter.ParameterName);
-          if (paramList.Count == 0 || parameter.Pos == -1)
-          {
-              paramList.Add(parameter);
-          }
-          else
-          {
-              for (int i = 0; i < paramList.Count; i++)
-              {
-                  if (paramList[i].Pos > parameter.Pos)
-                  {
-                      paramList.Insert(IndexOf(paramList[i]), parameter);
-                      break;
-                  }
-              }
-              if (!paramList.Contains(parameter))
-              {
-                  paramList.Add(parameter);
-              }
-          }
-      }
-      catch
-      {
-          paramList.Add(parameter);
-      }
+      paramList.Add(parameter);
+
       return IndexOf(parameter);
     }
 

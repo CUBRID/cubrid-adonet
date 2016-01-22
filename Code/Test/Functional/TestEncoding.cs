@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -15,7 +15,7 @@ namespace Test.Functional
     {
       using (CUBRIDConnection conn = new CUBRIDConnection())
       {
-        conn.ConnectionString = "server="+ip+";database=demodb;port=33000;user=public;password=;charset=utf-8";
+        conn.ConnectionString = "server=localhost;database=demodb;port=33000;user=public;password=;charset=utf-8";
         conn.Open();
 
         TestCases.ExecuteSQL("drop table if exists t", conn);
@@ -68,7 +68,7 @@ namespace Test.Functional
     {
       using (CUBRIDConnection conn = new CUBRIDConnection())
       {
-        conn.ConnectionString = "server="+ip+";database=demodb;port=33000;user=public;password=;charset=utf-8";
+        conn.ConnectionString = "server=localhost;database=demodb;port=33000;user=public;password=;charset=utf-8";
         conn.Open();
 
         TestCases.ExecuteSQL("drop table if exists t", conn);

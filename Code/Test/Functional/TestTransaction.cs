@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -133,8 +133,8 @@ namespace Test.Functional
 
         TestCases.ExecuteSQL("drop table if exists isol", conn);
 
-        conn.SetIsolationLevel(CUBRIDIsolationLevel.TRAN_REP_READ);
-        Debug.Assert(conn.GetIsolationLevel() == CUBRIDIsolationLevel.TRAN_REP_READ);
+        conn.SetIsolationLevel(CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
+        Debug.Assert(conn.GetIsolationLevel() == CUBRIDIsolationLevel.TRAN_REP_CLASS_UNCOMMIT_INSTANCE);
 
         tablesCount = (int)TestCases.GetSingleValue(sqlTablesCount, conn);
         TestCases.ExecuteSQL("create table isol(id int)", conn);
@@ -207,7 +207,6 @@ namespace Test.Functional
         tablesCount = (int)TestCases.GetSingleValue("select count(*) from db_class", conn);
 
         //Create table
-        TestCases.ExecuteSQL("drop table if exists xyz", conn);
         TestCases.ExecuteSQL("create table xyz(id int)", conn);
       }
 
@@ -220,7 +219,6 @@ namespace Test.Functional
         Debug.Assert(tablesCount == (int)TestCases.GetSingleValue("select count(*) from db_class", conn));
 
         //Create table
-        TestCases.ExecuteSQL("drop table if exists xyz", conn);
         TestCases.ExecuteSQL("create table xyz(id int)", conn);
       }
 

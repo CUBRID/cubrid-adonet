@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -37,7 +37,6 @@ namespace Test.Functional
 
         CUBRIDParameter param = new CUBRIDParameter();
         param.ParameterName = "?p";
-        param.CUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_BLOB;
         param.Value = Blob;
         cmd.Parameters.Add(param);
         cmd.Parameters[0].DbType = DbType.Binary;
@@ -96,7 +95,7 @@ namespace Test.Functional
 
         CUBRIDParameter param = new CUBRIDParameter();
         param.ParameterName = "?";
-        param.CUBRIDDataType = CUBRIDDataType.CCI_U_TYPE_BLOB;
+        //param.DataType = CUBRIDDataType.CCI_U_TYPE_BLOB;
         param.Value = Blob;
         cmd1.Parameters.Add(param);
         cmd1.Parameters[0].DbType = DbType.Binary;
@@ -235,7 +234,6 @@ namespace Test.Functional
         string sql1 = "insert into t (b) values(?)";
         CUBRIDCommand cmd1 = new CUBRIDCommand(sql1, conn);
         CUBRIDBlob Blob1 = new CUBRIDBlob(conn);
-        CUBRIDBlob Blob2 = new CUBRIDBlob(conn);
 
         byte[] bytes1 = new byte[256];
         bytes1[0] = 69;
@@ -360,7 +358,6 @@ namespace Test.Functional
         CUBRIDCommand cmd1 = new CUBRIDCommand(sql1, conn);
 
         CUBRIDClob Clob1 = new CUBRIDClob(conn);
-        CUBRIDClob Clob2 = new CUBRIDClob(conn);
 
         String str1 = conn.ConnectionString; //Use ConnectionString content for testing
         Clob1.SetString(1, str1);
@@ -603,7 +600,7 @@ namespace Test.Functional
         {
           CUBRIDBlob Blob = new CUBRIDBlob(conn);
           byte[] bytes;
-          b = new BinaryReader(File.Open("../../../CUBRID.ico", FileMode.Open));
+          b = new BinaryReader(File.Open("../../CUBRID.ico", FileMode.Open));
           int length = (int)b.BaseStream.Length;
           bytes = b.ReadBytes(length);
 
@@ -675,7 +672,7 @@ namespace Test.Functional
 
         CUBRIDClob Clob = new CUBRIDClob(conn);
 
-        StreamReader r = new StreamReader("../../../BSD License.txt");
+        StreamReader r = new StreamReader("../../BSD License.txt");
         string writestring = r.ReadToEnd();
         r.Close();
 

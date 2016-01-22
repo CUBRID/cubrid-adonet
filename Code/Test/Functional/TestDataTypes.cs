@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using CUBRID.Data.CUBRIDClient;
 
-namespace Test.Functional
+namespace CUBRID.Data.Test.Functional
 {
   public partial class TestCases
   {
@@ -216,7 +216,7 @@ namespace Test.Functional
             Debug.Assert(reader.GetDouble(7) == (double)1.1111);
             Debug.Assert(reader.GetChar(8) == 'a');
             Debug.Assert(reader.GetString(9) == "abcdfghijk");
-            Debug.Assert(reader.GetDateTime(10).Second == 45);
+            Debug.Assert(reader.GetDateTime(10) == new DateTime(1, 1, 1, 13, 15, 45));
             Debug.Assert(reader.GetDateTime(11) == new DateTime(2000, 10, 31));
             Debug.Assert(reader.GetDateTime(12) == new DateTime(2008, 10, 31, 13, 15, 45));
             Debug.Assert(reader.GetDateTime(13) == new DateTime(2008, 10, 31, 13, 15, 45));
