@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2"
+assembly="Cubrid.Data.Test.Nhibernate"
+namespace="Cubrid.Data.Test.Nhibernate">
+<class name="athlete" lazy="true">
+		<id name="code" column="code">
+			<generator class="assigned"/>
+		</id>
+		<property name="Name" column ="name"/>
+		<property name="Gender" column="gender"/>
+		<property name="NationCode" column ="nation_code"/>
+		<property name="Event" column = "event"/>
+	</class>
+</hibernate-mapping>

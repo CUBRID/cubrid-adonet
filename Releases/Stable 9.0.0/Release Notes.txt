@@ -1,0 +1,69 @@
+Release Notes
+================================================================================
+January 2013 - Update for release 9.0.0
+
+CUBRID ADO.NET Data Provider
+Version: Beta 9.0.0.003
+CUBRID engine compatible: 9.0.0
+Online Wiki: http://www.cubrid.org/wiki_apis/entry/cubrid-ado-net-driver
+JIRA issues: http://www.jira.cubrid.org/browse/APIS/component/10404
+================================================================================
+
+
+Fixed bugs
+==========
+- APIS-228 : Function: CUBRIDParameter.Write had a bug.
+- APIS-227 : Create a unit test project (MSTest)
+- APIS-211 : CUBRIDParameter function name is wrong.
+- APIS-212 : Function: CUBRIDConnection EncodingFromString, encoding name is wrong.
+- APIS-210 : CUBRIDConnection GetAutoCommit does not need to interact with the DB server.
+- APIS-213 : CUBRIDConnection Open () function does not determine the database name is not an empty string.
+- APIS-214 : Add resource: the db name is empty.
+- APIS-215 : CUBRIDConnectionStringBuilder default port is 30000.
+- APIS-209 : CUBRIDCommand Clone() does not determine whether the class member variable(parameters) is a null pointer.
+- APIS-219 : Function: CUBRIDDataReader.GetColumnTypeName(int) missing CUBRIDDateType
+- APIS-218 : Call function: CUBRIDDataReader.GetBytes, threw an exception.
+- APIS-217 : Call function: CUBRIDDataReader.GetBytes, threw an exception.
+- APIS-220 : Remove Constructor: public CUBRIDCommand(CUBRIDConnection conn, int handle)
+- APIS-221 : Remove class BatchResult from project
+- APIS-223 : CUBRIDCommand.ExecuteNonQuery function: call a stored function return value is not assigned to the return parameter.
+- APIS-222 : There is an error in the CUBRIDParameterCollection.Insert function
+- APIS-226 : CUBRIDCommandBuilder.SetRowUpdatingHandler has been assigned a null pointer
+- APIS-229 : CUBRIDParameter: Add a new member variable to record the data type of collection.
+- APIS-230 : Function: CUBRIDConnection.CurrentDatabase() has bugs.
+- APIS-238 : Function: CUBRIDOutputStream.WriteTimestamp has a bug
+- APIS-239 : Function: CUBRIDOutputStream.WriteTimeStampArg has a bug
+- APIS-236 : Function: CUBRIDSteam.WriteCollection has bugs.
+- APIS-235 : CUBRIDParameter: Write data to server not support multidimensional arrays.
+- APIS-264 : Optimized code according klocwork result.
+- APIS-365 : Using CUBRID.Data.CUBRIDClient.CUBRIDDataAdapter class's function fill() to read data from database will get an exception.
+- APIS-375 : Modify Ado.net driver version.
+- APIS-396 : The CAS_FC_EXECUTE command send data has changed.
+- APIS-416 : The CUBRID 9.x supports ENUM types.
+
+Components
+==========
+- The library release (CUBRID.Data.dll)
+- The driver Installer
+- The Release notes
+- The CHM driver documentation
+- Scenarios test cases (80+)
+
+
+Known Issues
+============
+Now, ADO.NET beta driver did not support CUBRID 9.0.0 beta version completely. Please refer the following.
+
+- APIS-366 : When using bind parameters to insert data, if parameter type is SET and the actual data type is STRING, Ado.net driver will threw an exception. 
+  When using bind parameters to insert data, if parameter type is CCI_U_TYPE_SET/CCI_U_TYPE_MULTISET/CCI_U_TYPE_SEQUENCE
+  and the actual data type is CCI_U_TYPE_CHAR/CCI_U_TYPE_NCHAR/CCI_U_TYPE_STRING/CCI_U_TYPE_VARNCHAR.
+  After data sort, the first data length must be greater than or equal to other data. otherwise,
+  the Ado.net driver will threw an exception.
+  For more information, please refer to the url: http://jira.cubrid.org/browse/APIS-366
+
+
+Please let us know your feedback.
+
+Thank you!
+The CUBRID Interface team
+www.cubrid.org
