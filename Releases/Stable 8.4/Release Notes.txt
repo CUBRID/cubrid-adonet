@@ -1,0 +1,51 @@
+Release Notes
+==============================================
+
+
+CUBRID ADO.NET Driver
+Version: Stable 1.0
+CUBRID engine compatibility: 8.4
+Online documentation: http://www.cubrid.org/projects
+==============================================
+
+
+
+Main features implemented
+==============================================
+- 100% Fully-managed code. Does not require any local CUBRID component installation.
+- Open-source code, released under GPL v2 license.
+- Implementation of the CUBRID 8.4 (sockets) communication protocol
+- BLOB/CLOB support; CUBRID Collections support.
+- Implementation of all main classes in ADO.NET model
+- Extended classes implementation (SchemaProvider, CommandBuilder etc.)
+- Test cases. There are 70+ scenario test cases.
+- Driver implementation documentation, in CHM format.
+- Localization support built-in. For now, only English messages are released.
+- Various source code demos/examples: UI, VB.NET, NHibernate.
+- Tutorials
+
+
+
+Components
+==============================================
+- The library release (CUBRID.Data.dll)
+- The driver Installer
+- The Release notes
+- The CHM driver documentation
+- Scenarios test cases (70+)
+
+
+
+Known issues/TODOs
+==============================================
+
+
+Please let us know your feedback.
+
+Thank you!
+The CUBRID team
+
+www.cubrid.org
+
+
+

@@ -1,0 +1,47 @@
+﻿Development Notes
+=================================
+TODO:
+- Fix DataTable editing support
+- Clarify what we do with parameters prefix support: @ or ?
+- Test parameters in SQL statements
+- Enable and Run all test cases
+- Cleanup unit tests/Run enable ones
+- Go through all TODOs
+- Re-test LOBs
+- Test Transactions support
+- Cleanup comments/Cleanup commented code
+- Move all hard-coded messages to (en-US) Resources
+- Verify all (public) methods are documented
+- Document work: Email + Word document
+- Implement in CUBRIDSchemaProvider:
+		public DataTable GetExportedKeys(string[] filters)
+		public DataTable GetCrossReferenceKeys(string[] filters)
+- Prepare release notes for beta release, on 4th Dec
+- Verify release license
+
+
+
+TODO (Phase Ia - Beta release):
+=================================
+- 32-bit beta
+- Documentation - .CHM
+- Unit testing - partial
+- Scenario testing
+
+TODO (Phase Ib - Stable release):
+=================================
+- 32-bit stable
+- Tutorials
+- Code examples
+- Installer
+- Unit testing - complete
+
+TODO (Phase II - Extended support):
+=================================
+- Designer support
+- Enties support
+- More Tutorials
+- More Code examples
+- 64-bit Stable release
+
+
