@@ -1,0 +1,9 @@
+# Please modify following 
+# The included/excluded paths are applied sequentially from up to down
+# * FILTER_SCOPE_NAME
+# + included_path_patterns
+# - excluded_path_patterns
+# = LANGUAGE_NAME:EXTENSION,LANGUAGE_NAME:EXTENSION (Java=java,C/C++=cpp,cxx,c,hxx,hpp,h)
+* default
+  = C/C++:cs
+#- \com\cubrid\cubridmanager\ui\query\grammar\
