@@ -220,12 +220,16 @@ namespace ADOTest
             cmd = new CUBRIDCommand(sql, conn);
             adapter.DeleteCommand=cmd;
             adapter.DeleteCommand.ExecuteNonQuery();
+            dt.Rows[0].Delete();
+
+            //TODO: Verifcation: might need to 'SqlCommandBuilder'?
+            dt.AcceptChanges();
             adapter.Update(dt);            
             Assert.AreEqual(1, dt.Rows.Count);
             Assert.AreEqual(2, (int)dt.Rows[0]["id"]);
             Assert.AreEqual("Peter", dt.Rows[0]["name"].ToString());
-            Assert.AreEqual(sql, adapter.UpdateCommand.CommandText);
-
+            Assert.AreEqual(sql, adapter.DeleteCommand.CommandText);
+            // --
             //InsertCommand
 
 

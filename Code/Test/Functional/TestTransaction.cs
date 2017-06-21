@@ -175,7 +175,7 @@ namespace Test.Functional
           connOut.ConnectionString = TestCases.connString;
           connOut.Open();
           newTableCount = (int)TestCases.GetSingleValue(sqlTablesCount, connOut);
-          Debug.Assert(newTableCount == tablesCount + 1);
+          Debug.Assert(newTableCount == tablesCount);
         }
 
         conn.Commit();

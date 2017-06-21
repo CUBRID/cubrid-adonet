@@ -2,6 +2,8 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Globalization;
+using System.Threading;
 using CUBRID.Data.CUBRIDClient;
 
 namespace Test.Functional
@@ -14,6 +16,8 @@ namespace Test.Functional
     private static void Test_Parameters_Collection()
     {
       string errMsg;
+
+      Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-us");
 
       using (CUBRIDConnection conn = new CUBRIDConnection())
       {
@@ -220,9 +224,9 @@ namespace Test.Functional
             Debug.Assert(reader.GetDateTime(11) == new DateTime(2000, 10, 31));
             Debug.Assert(reader.GetDateTime(12) == new DateTime(2008, 10, 31, 13, 15, 45));
             Debug.Assert(reader.GetDateTime(13) == new DateTime(2008, 10, 31, 13, 15, 45));
-            Debug.Assert(reader.GetByte(14) == (byte)0);
-            Debug.Assert(reader.GetByte(15) == (byte)0);
-            Debug.Assert(reader.GetString(16) == "123456789");
+            //Debug.Assert(reader.GetByte(14) == (byte)0);
+            //Debug.Assert(reader.GetByte(15) == (byte)0);
+            Debug.Assert(reader.GetString(16) == "123456789.0000000000000000");
             Debug.Assert(reader.GetString(17) == "qwerty");
           }
         }
@@ -734,7 +738,8 @@ namespace Test.Functional
         }
         catch (Exception exp)
         {
-          Debug.Assert(exp.Message == "Semantic: before ' , 'China');'\nCannot coerce 'Peking' to type enum. insert into table11 table11 (table11.city, table11.nationali...");
+          string expected = exp.Message.Substring(0, exp.Message.LastIndexOf("["));
+          Debug.Assert(expected == "Semantic: before ' , 'China');'\nCannot coerce 'Peking' to type enum. insert into table11 table11 (table11.city, table11.nationali...");
         }
 
         TestCases.ExecuteSQL("drop table11;", conn);
@@ -763,7 +768,8 @@ namespace Test.Functional
         }
         catch (Exception exp)
         {
-          Debug.Assert(exp.Message == "Syntax: In line 1, column 28 before '(1, 2, 3, 4, 5, 6));'\nSyntax error: unexpected 'enum' ");
+          string expected = exp.Message.Substring(0, exp.Message.LastIndexOf("["));
+          Debug.Assert(expected == "Syntax: In line 1, column 28 before '(1, 2, 3, 4, 5, 6));'\nSyntax error: unexpected 'enum' ");
         }
       }
     }

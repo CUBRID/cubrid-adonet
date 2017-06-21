@@ -4,6 +4,9 @@ using System.Data.Common;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Globalization;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CUBRID.Data.CUBRIDClient;
@@ -221,6 +224,9 @@ namespace ADOTest
             //TODO test date time 
             using (CUBRIDConnection conn = new CUBRIDConnection())
             {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 

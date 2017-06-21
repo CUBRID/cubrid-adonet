@@ -33,6 +33,7 @@ using System.Collections;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Globalization;
 using System.Collections.Generic;
 
 namespace CUBRID.Data.CUBRIDClient
@@ -298,7 +299,7 @@ namespace CUBRID.Data.CUBRIDClient
       object val = GetValue(ordinal);
       string type = GetColumnTypeName(ordinal);
 
-      if (type != "BLOB" && type != "CLOB")
+      if (type != "BLOB" && type != "CLOB" && type != "BIT" && type != "VARBIT")
         throw new CUBRIDException(Utils.GetStr(MsgId.GetBytesCanBeCalledOnlyOnBinaryColumns));
 
       // [APIS-217] Check the offset value is correct.
@@ -321,6 +322,23 @@ namespace CUBRID.Data.CUBRIDClient
 
       byte[] bytes;
       //[APIS-217] CUBRIDDataReader.GetBytes, threw an exception.
+
+      if (type == "BIT" || type == "VARBIT")
+      {
+          bytes = (byte[])GetObject(ordinal);
+          Debug.Assert(bytes != null, "bit != null");
+          if (dataOffset < bytes.Length && dataOffset + length <= bytes.Length)
+          { 
+            for (long i = 0; i < length; i++) buffer[i + bufferOffset] = bytes[i + dataOffset];
+          }
+          else
+          {
+            throw new IndexOutOfRangeException(Utils.GetStr(MsgId.DataOffsetMustBeValidPositionInField));
+          }
+
+          return length;
+      }
+
       if (type == "BLOB")
       {
         CUBRIDBlob blob = val as CUBRIDBlob;
@@ -887,7 +905,7 @@ namespace CUBRID.Data.CUBRIDClient
     public string GetDate(int ordinal, string dateFormat)
     {
       DateTime dt = Convert.ToDateTime(GetObject(ordinal));
-      return dt.ToString(dateFormat);
+      return dt.ToString(dateFormat, CultureInfo.InvariantCulture);
     }
 
     /// <summary>

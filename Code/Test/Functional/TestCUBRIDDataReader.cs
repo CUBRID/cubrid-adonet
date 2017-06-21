@@ -2,8 +2,11 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Threading;
+using System.Globalization;
 using CUBRID.Data.CUBRIDClient;
 using System.Text;
+using System.Linq;
 
 namespace Test.Functional
 {
@@ -173,7 +176,7 @@ namespace Test.Functional
             sql += "c_date date, ";
             sql += "c_timestamp timestamp, ";
             sql += "c_datetime datetime, ";
-            sql += "c_bit bit(1), ";
+            sql += "c_bit bit(32), ";
             sql += "c_varbit bit varying(4096), ";
             sql += "c_monetary monetary, ";
             sql += "c_string string";
@@ -195,8 +198,8 @@ namespace Test.Functional
             sql += "DATE '00-10-31', ";
             sql += "TIMESTAMP '13:15:45 10/31/2008', ";
             sql += "DATETIME '13:15:45 10/31/2008', ";
-            sql += "B'0', ";
-            sql += "B'0', ";
+            sql += "B'0110011110101001', ";
+            sql += "B'010110110111110000', ";
             sql += "123456789, ";
             sql += "'qwerty'";
             sql += ")";
@@ -206,7 +209,9 @@ namespace Test.Functional
             using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
             {
                 CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader();
-                while (reader.Read()) //only one row will be available
+                Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+                    while (reader.Read()) //only one row will be available
                 {
                     int Ordinal = reader.GetOrdinal("c_integer_ai");
                     Debug.Assert(Ordinal == 0);
@@ -294,11 +299,17 @@ namespace Test.Functional
                 
                     Debug.Assert(dt == new DateTime(2008, 10, 31, 13, 15, 45));
 
-                    byte by= reader.GetByte(14);
+                    byte[] by = new byte[4];
+                    byte[] expected = { 0x67, 0xa9, 0x00, 0x00 };
+                    reader.GetBytes(14, 0, by, 0, 4);
+                    Debug.Assert(by.SequenceEqual(expected));
                     t = reader.GetColumnType(14);
-                    Debug.Assert(by == (byte)0);
-                    Debug.Assert(reader.GetByte(15) == (byte)0);
+
+                    expected[0] = 0x5b; expected[1] = 0x7c; expected[2] = 0x00;
+                    reader.GetBytes(15, 0, by, 0, 3);
+                    Debug.Assert(by.SequenceEqual(expected));
                     t = reader.GetColumnType(15);
+
                     Debug.Assert(reader.GetString(16) == "123456789.0000000000000000");
                     t = reader.GetColumnType(16);
                     char[] buffer = new char[16];
