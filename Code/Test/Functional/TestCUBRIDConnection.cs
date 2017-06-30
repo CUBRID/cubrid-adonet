@@ -232,7 +232,7 @@ namespace Test.Functional
         catch (Exception e)
         {
             Console.WriteLine(e.ToString());
-            Debug.Assert(e.Message == "Invalid connection handle");
+            Debug.Assert(e.Message == "The connection is not open!");
         }
 
         try

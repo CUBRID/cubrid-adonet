@@ -23,25 +23,25 @@ namespace Test.Functional
         Debug.Assert(dt.Columns.Count == 9);
         Debug.Assert(dt.Rows.Count == 2);
 
-        Debug.Assert(dt.Rows[0][0].ToString() == "event");
-        Debug.Assert(dt.Rows[0][1].ToString() == "code");
-        Debug.Assert(dt.Rows[0][2].ToString() == "game");
-        Debug.Assert(dt.Rows[0][3].ToString() == "event_code");
-        Debug.Assert(dt.Rows[0][4].ToString() == "1");
-        Debug.Assert(dt.Rows[0][5].ToString() == "1");
-        Debug.Assert(dt.Rows[0][6].ToString() == "1");
-        Debug.Assert(dt.Rows[0][7].ToString() == "fk_game_event_code");
-        Debug.Assert(dt.Rows[0][8].ToString() == "pk_event_code");
-
-        Debug.Assert(dt.Rows[1][0].ToString() == "athlete");
+        Debug.Assert(dt.Rows[1][0].ToString() == "event");
         Debug.Assert(dt.Rows[1][1].ToString() == "code");
         Debug.Assert(dt.Rows[1][2].ToString() == "game");
-        Debug.Assert(dt.Rows[1][3].ToString() == "athlete_code");
+        Debug.Assert(dt.Rows[1][3].ToString() == "event_code");
         Debug.Assert(dt.Rows[1][4].ToString() == "1");
         Debug.Assert(dt.Rows[1][5].ToString() == "1");
         Debug.Assert(dt.Rows[1][6].ToString() == "1");
-        Debug.Assert(dt.Rows[1][7].ToString() == "fk_game_athlete_code");
-        Debug.Assert(dt.Rows[1][8].ToString() == "pk_athlete_code");
+        Debug.Assert(dt.Rows[1][7].ToString() == "fk_game_event_code");
+        Debug.Assert(dt.Rows[1][8].ToString() == "pk_event_code");
+
+        Debug.Assert(dt.Rows[0][0].ToString() == "athlete");
+        Debug.Assert(dt.Rows[0][1].ToString() == "code");
+        Debug.Assert(dt.Rows[0][2].ToString() == "game");
+        Debug.Assert(dt.Rows[0][3].ToString() == "athlete_code");
+        Debug.Assert(dt.Rows[0][4].ToString() == "1");
+        Debug.Assert(dt.Rows[0][5].ToString() == "1");
+        Debug.Assert(dt.Rows[0][6].ToString() == "1");
+        Debug.Assert(dt.Rows[0][7].ToString() == "fk_game_athlete_code");
+        Debug.Assert(dt.Rows[0][8].ToString() == "pk_athlete_code");
       }
     }
 
@@ -287,7 +287,7 @@ namespace Test.Functional
 
         string queryPlan = conn.GetQueryPlanOnly("select * from athlete order by 1 desc");
 
-        Debug.Assert(queryPlan == "Join graph segments (f indicates final):\nseg[0]: [0]\nseg[1]: code[0] (f)\nseg[2]: name[0] (f)\nseg[3]: gender[0] (f)\nseg[4]: nation_code[0] (f)\nseg[5]: event[0] (f)\nJoin graph nodes:\nnode[0]: athlete athlete(6677/27) (sargs 0)\nJoin graph terms:\nterm[0]: athlete.code range (-2147483648 ge_inf max) (sel 1) (rank 2) (sarg term) (not-join eligible) (indexable code[0]) (loc 0)\n\nQuery plan:\n\niscan\n    class: athlete node[0]\n    index: pk_athlete_code term[0] (desc_index)\n    sort:  1 asc\n    cost:  92 card 6677\n\nQuery stmt:\n\nselect athlete.code, athlete.[name], athlete.gender, athlete.nation_code, athlete.event from athlete athlete where (athlete.code>=-2147483648) order by 1 desc \n\n/* ---> skip ORDER BY */\n");
+        Debug.Assert(queryPlan == "Join graph segments (f indicates final):\nseg[0]: [0]\nseg[1]: code[0] (f)\nseg[2]: name[0] (f)\nseg[3]: gender[0] (f)\nseg[4]: nation_code[0] (f)\nseg[5]: event[0] (f)\nJoin graph nodes:\nnode[0]: athlete athlete(6677/32) (loc 0)\n\nQuery plan:\n\niscan\n    class: athlete node[0]\n    index: pk_athlete_code  (desc_index)\n    sort:  1 desc\n    cost:  97 card 6677\n\nQuery stmt:\n\nselect athlete.code, athlete.[name], athlete.gender, athlete.nation_code, athlete.event from athlete athlete order by 1 desc \n\n/* ---> skip ORDER BY */\n");
       }
     }
 

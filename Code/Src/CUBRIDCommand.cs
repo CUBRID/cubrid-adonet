@@ -370,21 +370,29 @@ namespace CUBRID.Data.CUBRIDClient
       for (int i = 0; i < paramCollection.Count; i++)
       {
         parameters[i] = paramCollection[i];
-        if (parameters[i].InnerCUBRIDDataType == CUBRIDDataType.CCI_U_TYPE_BLOB ||
-            parameters[i].InnerCUBRIDDataType == CUBRIDDataType.CCI_U_TYPE_CLOB)
-          {
-             isPrepared = false;
-            throw new CUBRIDException ("Not implemented");
-          }
-        int err_code = CciInterface.cci_bind_param
-                       (conn, handle, i + 1, T_CCI_A_TYPE.CCI_A_TYPE_STR, parameters[i], CUBRIDDataType.CCI_U_TYPE_STRING, (char)0);
+        if (this.Parameters[i].Direction == ParameterDirection.Input)
+        {    
+            if (parameters[i].InnerCUBRIDDataType == CUBRIDDataType.CCI_U_TYPE_BLOB ||
+                parameters[i].InnerCUBRIDDataType == CUBRIDDataType.CCI_U_TYPE_CLOB)
+            {
+                isPrepared = false;
+                throw new CUBRIDException("Not implemented");
+            }
+            int err_code = CciInterface.cci_bind_param
+                        (conn, handle, i + 1, T_CCI_A_TYPE.CCI_A_TYPE_STR, parameters[i], CUBRIDDataType.CCI_U_TYPE_STRING, (char)0);
 
-        if (err_code < 0)
-          {
-             isPrepared = false;
-            throw new CUBRIDException (err_code);
-          }
+            if (err_code < 0)
+            {
+                isPrepared = false;
+                throw new CUBRIDException(err_code);
+            }
+        }
+        else
+        {
+            CciInterface.cci_register_out_param(handle, i + 1, T_CCI_A_TYPE.CCI_A_TYPE_STR);
+        }
       }
+
       //TODO Verify if these initializations are required
       bindCount = paramCollection.Count;
       isPrepared = false;
@@ -528,14 +536,44 @@ namespace CUBRID.Data.CUBRIDClient
         throw new CUBRIDException (err.err_msg);
       }
 
-      columnInfos = CciInterface.cci_get_result_info (handle);
+      columnInfos = CciInterface.cci_get_result_info(handle);
 
-      if (handle > 0)
-      {
-        CciInterface.cci_close_req_handle (handle);
+        if (this.Parameters.Count > 0)
+        {
+            if (this.GetOutModeParameterCount() == 0 || columnInfos == null)
+            {
+                CciInterface.cci_close_req_handle(handle);
+                handle = 0;
+
+                return ret;
+            }
+
+            if ((ret = CciInterface.cci_cursor(handle, 1, CCICursorPosition.CCI_CURSOR_FIRST, ref err)) < 0)
+            {
+                throw new CUBRIDException(err.err_msg);
+            }
+
+            if ((ret = CciInterface.cci_fetch(handle, ref err)) < 0)
+            {
+                throw new CUBRIDException(err.err_msg);
+            }
+            
+            for (int i = 1; i <= this.Parameters.Count; i++)
+            {
+                if (this.Parameters[i - 1].Direction == ParameterDirection.InputOutput || this.Parameters[i - 1].Direction == ParameterDirection.Output)
+                {
+                    object value = new object();
+                    CciInterface.cci_get_value(conn, i, Parameters[i - 1].CUBRIDDataType, ref value);
+                    Parameters[i - 1].Value = value;
+                }
+            }
+
+        }
+
+        ret = CciInterface.cci_close_req_handle(handle);
         handle = 0;
-      }
-      return ret;
+
+        return ret;
     }
 
     private int GetOutModeParameterCount()

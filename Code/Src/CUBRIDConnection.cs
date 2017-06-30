@@ -920,7 +920,8 @@ namespace CUBRID.Data.CUBRIDClient
         }
         if (sqls == null || sqls.Length == 0)
         {
-            return 0;
+            throw new CUBRIDException(Utils.GetStr(MsgId.NotSupported));
+            //return 0;
         }
 
         T_CCI_QUERY_RESULT[] query_result = null;

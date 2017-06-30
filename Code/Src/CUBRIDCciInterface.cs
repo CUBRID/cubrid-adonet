@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace CUBRID.Data.CUBRIDClient
@@ -10,7 +11,8 @@ namespace CUBRID.Data.CUBRIDClient
     enum T_CCI_PREPARE_FLAG
     {
         CCI_PREPARE_INCLUDE_OID = 0x01,
-        CCI_PREPARE_UPDATABLE = 0x02
+        CCI_PREPARE_UPDATABLE = 0x02,
+        CCI_PREPARE_CALL = 0x40,
     }
     enum T_CCI_ERROR_CODE
     {
@@ -209,55 +211,56 @@ namespace CUBRID.Data.CUBRIDClient
             return out_buf.ToString();
         }
 
-        [DllImport(dll_name, EntryPoint = "cci_col_size", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_col_size", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_col_size(int mapped_conn_id, string oid_str, string col_attr, ref int col_size, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_col_set_add", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_col_set_add", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_col_set_add(int mapped_conn_id, string oid_str, string col_attr,
             string value, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_col_set_drop", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_col_set_drop", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int  cci_col_set_drop(int mapped_conn_id, string oid_str, string col_attr, string value, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_col_seq_put", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_col_seq_put", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_col_seq_put(int mapped_conn_id, string oid_str, string col_attr, 
             int index, string value, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_col_seq_insert", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_col_seq_insert", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_col_seq_insert(int mapped_conn_id, string oid_str, string col_attr,
 		    int index, string value, ref T_CCI_ERROR  err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_col_seq_drop", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_col_seq_drop", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_col_seq_drop(int mapped_conn_id, string oid_str, string col_attr,
             int index, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_connect_with_url_ex", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_connect_with_url_ex", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_connect_with_url_ex(string url, string db_user, string db_password, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_oid_get_class_name", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_oid_get_class_name", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_oid_get_class_name(int mapped_conn_id, string oid_str, byte[] out_buf,
             int out_buf_size, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_set_holdability")]
+        [DllImport(dll_name, EntryPoint = "cci_set_holdability", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_set_holdability(int mapped_conn_id, int holdable);
 
-        [DllImport(dll_name, EntryPoint = "cci_set_charset", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_set_charset", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_set_charset(int mapped_conn_id, string charset);
 
-        [DllImport(dll_name, EntryPoint = "cci_disconnect", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_disconnect", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_disconnect(int mapped_conn_id, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_close_req_handle", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_close_req_handle", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_close_req_handle(int req_id);
 
-        [DllImport(dll_name, EntryPoint = "cci_prepare", CharSet = CharSet.Ansi)]
-        public static extern int cci_prepare(int conn_handle, string sql_stmt, char flag, ref T_CCI_ERROR err_buf);
+        [DllImport(dll_name, EntryPoint = "cci_prepare", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+        public static extern int cci_prepare(int conn_handle, byte[] sql_stmt, char flag, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_execute", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_execute", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_execute(int req_handle, char flag, int max_col_size, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_get_result_info", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_get_result_info", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern IntPtr cci_get_result_info_internal(int req_handle, ref int stmt_type, ref int col_num);
+
         public static ColumnMetaData[] cci_get_result_info(int req_handle)
         {
             int stmt_type = 0;
@@ -303,72 +306,75 @@ namespace CUBRID.Data.CUBRIDClient
             return item;
         }
 
-        [DllImport(dll_name, EntryPoint = "cci_cursor", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_cursor", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_cursor(int mapped_stmt_id, int offset, CCICursorPosition origin, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_fetch", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_fetch", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_fetch(int mapped_stmt_id, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_get_data")]
+        [DllImport(dll_name, EntryPoint = "cci_get_value", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int cci_get_value(CUBRIDConnection con_handle, int col_no, int type, ref IntPtr value);
+
+        [DllImport(dll_name, EntryPoint = "cci_get_data", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_get_data(int req_handle, int col_no, int type, ref IntPtr value, ref int indicator);
 
-        [DllImport(dll_name, EntryPoint = "cci_get_data")]
+        [DllImport(dll_name, EntryPoint = "cci_get_data", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_get_data(int req_handle, int col_no, int type, ref T_CCI_BIT value, ref int indicator);
 
-        [DllImport(dll_name, EntryPoint = "cci_set_make", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_set_make", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_set_make(ref IntPtr set, CUBRIDDataType u_type, int size, string[] value, int[] indicator);
 
-        [DllImport(dll_name, EntryPoint = "cci_set_free")]
+        [DllImport(dll_name, EntryPoint = "cci_set_free", CallingConvention = CallingConvention.Cdecl)]
         public static extern void cci_set_free (IntPtr set);
 
-        [DllImport(dll_name, EntryPoint = "cci_blob_new", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_blob_new", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_blob_new(int con_h_id, ref IntPtr blob, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_blob_size")]
+        [DllImport(dll_name, EntryPoint = "cci_blob_size", CallingConvention = CallingConvention.Cdecl)]
         public static extern UInt64 cci_blob_size(IntPtr blob);
 
-        [DllImport(dll_name, EntryPoint = "cci_blob_write", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_blob_write", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_blob_write(int con_h_id, IntPtr blob, UInt64 start_pos, int length, byte[] buf, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_blob_read", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_blob_read", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_blob_read(int con_h_id, IntPtr blob, UInt64 start_pos, int length, byte[] buf, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_blob_free")]
+        [DllImport(dll_name, EntryPoint = "cci_blob_free", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_blob_free(IntPtr blob);
 
-        [DllImport(dll_name, EntryPoint = "cci_clob_new", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_clob_new", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_clob_new(int con_h_id, ref IntPtr clob, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_clob_size")]
+        [DllImport(dll_name, EntryPoint = "cci_clob_size", CallingConvention = CallingConvention.Cdecl)]
         public static extern UInt64 cci_clob_size(IntPtr clob);
 
-        [DllImport(dll_name, EntryPoint = "cci_clob_write", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_clob_write", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_clob_write(int con_h_id, IntPtr clob, UInt64 start_pos, int length, string buf, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_clob_read", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_clob_read", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_clob_read(int con_h_id, IntPtr clob, UInt64 start_pos, int length, byte[] buf, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_clob_free")]
+        [DllImport(dll_name, EntryPoint = "cci_clob_free", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_clob_free(IntPtr clob);
 
-        [DllImport(dll_name, EntryPoint = "cci_set_autocommit")]
+        [DllImport(dll_name, EntryPoint = "cci_set_autocommit", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_set_autocommit(int mapped_conn_id, CCI_AUTOCOMMIT_MODE mode);
         public static int cci_set_autocommit(CUBRIDConnection conn_handle, CCI_AUTOCOMMIT_MODE mode)
         {
             return cci_set_autocommit(conn_handle.Conection, mode);
         }
 
-        [DllImport(dll_name, EntryPoint = "cci_get_autocommit")]
+        [DllImport(dll_name, EntryPoint = "cci_get_autocommit", CallingConvention = CallingConvention.Cdecl)]
         public static extern CCI_AUTOCOMMIT_MODE cci_get_autocommit(int mapped_conn_id);
         public static CCI_AUTOCOMMIT_MODE cci_get_autocommit(CUBRIDConnection conn_handle)
         {
             return cci_get_autocommit(conn_handle.Conection);
         }
-        [DllImport(dll_name, EntryPoint = "cci_get_db_parameter", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_get_db_parameter", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_get_db_parameter(int con_handle, T_CCI_DB_PARAM param_name,
                  ref int value, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_set_db_parameter", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_set_db_parameter", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_set_db_parameter(int con_handle, T_CCI_DB_PARAM param_name,
                          ref int value, ref T_CCI_ERROR err_buf);
         public static int cci_set_db_parameter(int con_handle, T_CCI_DB_PARAM param_name,
@@ -378,22 +384,28 @@ namespace CUBRID.Data.CUBRIDClient
             return cci_set_db_parameter(con_handle, param_name, ref value, ref err_buf);
         }
 
-        [DllImport(dll_name, EntryPoint = "cci_end_tran", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_end_tran", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_end_tran(int con_handle, char type, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_bind_param", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_bind_param", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+        public static extern int bind_param(int mapped_stmt_id, int index, T_CCI_A_TYPE a_type, byte[] value, CUBRIDDataType u_type, char flag);
+
+        [DllImport(dll_name, EntryPoint = "cci_bind_param", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int bind_param(int mapped_stmt_id, int index, T_CCI_A_TYPE a_type, IntPtr value, CUBRIDDataType u_type, char flag);
 
-        [DllImport(dll_name, EntryPoint = "cci_execute_batch", CharSet = CharSet.Ansi)]
+        [DllImport(dll_name, EntryPoint = "cci_register_out_param", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int cci_register_out_param(int mapped_stmt_id, int index, T_CCI_A_TYPE a_type);
+
+        [DllImport(dll_name, EntryPoint = "cci_execute_batch", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern int cci_execute_batch_internal(int conn_handle, int num_sql_stmt, string[] sql_stmt, ref IntPtr query_result, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_query_result_free")]
+        [DllImport(dll_name, EntryPoint = "cci_query_result_free", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_query_result_free(IntPtr query_result, int num_query);
 
-        [DllImport(dll_name, EntryPoint = "cci_next_result")]
+        [DllImport(dll_name, EntryPoint = "cci_next_result", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_next_result(int req_handle, ref T_CCI_ERROR err_buf);
 
-        [DllImport(dll_name, EntryPoint = "cci_get_query_plan")]
+        [DllImport(dll_name, EntryPoint = "cci_get_query_plan", CallingConvention = CallingConvention.Cdecl)]
         public static extern int get_query_plan(int req_handle, ref IntPtr out_buf_p);
         public static string cci_get_query_plan(int req_handle, ref IntPtr out_buf_p)
         {
@@ -405,14 +417,14 @@ namespace CUBRID.Data.CUBRIDClient
             return Marshal.PtrToStringAnsi(out_buf_p);
         }
 
-        [DllImport(dll_name, EntryPoint = "cci_schema_info")]
+        [DllImport(dll_name, EntryPoint = "cci_schema_info", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_schema_info(int conn_handle, T_CCI_SCH_TYPE type, string class_name, string attr_name, char flag, ref T_CCI_ERROR err_buf);
         public static int cci_schema_info(CUBRIDConnection con, T_CCI_SCH_TYPE type, string class_name, string attr_name, char flag, ref T_CCI_ERROR err_buf)
         {
             return cci_schema_info(con.Conection, type, class_name, attr_name, flag, ref err_buf);
         }
 
-        [DllImport(dll_name, EntryPoint = "cci_query_info_free")]
+        [DllImport(dll_name, EntryPoint = "cci_query_info_free", CallingConvention = CallingConvention.Cdecl)]
         public static extern int cci_query_info_free(IntPtr out_buf);
 
         public static int cci_execute_batch(int conn_handle, string[] sql_stmt, ref T_CCI_QUERY_RESULT[] query_result, ref T_CCI_ERROR err_buf)
@@ -434,6 +446,7 @@ namespace CUBRID.Data.CUBRIDClient
             }
             return n_executed;
         }
+
         public static int cci_prepare(CUBRIDConnection conn_handle, string sql_stmt, ref T_CCI_ERROR err_buf)
         {
             int ret = cci_set_holdability(conn_handle.Conection,0);
@@ -441,15 +454,113 @@ namespace CUBRID.Data.CUBRIDClient
             {
                 return ret;
             }
-            sql_stmt = Encoding.Default.GetString(conn_handle.GetEncoding().GetBytes(sql_stmt));
-            return cci_prepare(
-                conn_handle.Conection, sql_stmt, 
-                (char)(T_CCI_PREPARE_FLAG.CCI_PREPARE_INCLUDE_OID|
-                T_CCI_PREPARE_FLAG.CCI_PREPARE_UPDATABLE), 
+
+            byte[] sql = conn_handle.GetEncoding().GetBytes(sql_stmt);
+
+            string trimed_stmt = new string(sql_stmt.ToCharArray()
+                                .Where(c => !Char.IsWhiteSpace(c))
+                                .ToArray());
+
+            if ((trimed_stmt.Substring(0, 6).ToLower() == "?=call") ||
+                (trimed_stmt.Substring(0, 4).ToLower() == "call"))
+            {
+                return cci_prepare(
+                    conn_handle.Conection, sql,
+                    (char)T_CCI_PREPARE_FLAG.CCI_PREPARE_CALL,
+                    ref err_buf);
+            }
+            else
+            {
+                return cci_prepare(
+                conn_handle.Conection, sql,
+                (char)(T_CCI_PREPARE_FLAG.CCI_PREPARE_INCLUDE_OID |
+                T_CCI_PREPARE_FLAG.CCI_PREPARE_UPDATABLE),
                 ref err_buf);
+            }
         }
 
-        public static int cci_get_data(ResultTuple rt, int req_handle, int col_no, int type,CUBRIDConnection conn)
+        public static int cci_get_value(CUBRIDConnection con_handle, int col_no, CUBRIDDataType type, ref object val)
+        {
+            int req_handle = con_handle.Conection;
+            IntPtr value = IntPtr.Zero;
+            int indicator = 0, res = 0;
+            switch (type)
+            {
+                case CUBRIDDataType.CCI_U_TYPE_BLOB:
+                    res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_BLOB, ref value, ref indicator);
+                    CUBRIDBlob blob = new CUBRIDBlob(value, con_handle);
+                    val = blob;
+                    break;
+                case CUBRIDDataType.CCI_U_TYPE_CLOB:
+                    res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_CLOB, ref value, ref indicator);
+                    CUBRIDClob clob = new CUBRIDClob(value, con_handle);
+                    val = clob;
+                    break;
+                case CUBRIDDataType.CCI_U_TYPE_INT:
+                    res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_STR, ref value, ref indicator);
+                    if (Marshal.PtrToStringAnsi(value) == null)
+                    {
+                        val = null;
+                    }
+                    else
+                    {
+                        val = Convert.ToInt32(Marshal.PtrToStringAnsi(value));
+                    }
+                    break;
+                case CUBRIDDataType.CCI_U_TYPE_BIGINT:
+                    res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_STR, ref value, ref indicator);
+                    val = Convert.ToInt64(Marshal.PtrToStringAnsi(value));
+                    break;
+                case CUBRIDDataType.CCI_U_TYPE_OBJECT:
+                    res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_STR, ref value, ref indicator);
+                    string oid = Marshal.PtrToStringAnsi(value);
+                    val = new CUBRIDOid(oid);
+                    break;
+                case CUBRIDDataType.CCI_U_TYPE_BIT:
+                    T_CCI_BIT bit = new T_CCI_BIT();
+                    res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_BIT, ref bit, ref indicator);
+                    byte[] data = new byte[bit.size];
+                    for (int i = 0; i < bit.size; i++) data[i] = Marshal.ReadByte(bit.buf, i);
+                    val = new byte[bit.size];
+                    Array.Copy(data, (byte[])val, bit.size);
+                    break;
+                default:
+                    res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_STR, ref value, ref indicator);
+                    if (value != IntPtr.Zero)
+                    {
+                        if (con_handle.GetEncoding().Equals(Encoding.UTF8))
+                        {
+                            Byte[] v = Encoding.Unicode.GetBytes(Marshal.PtrToStringUni(value));
+                            int count = 0;
+                            while (count < v.Length && v[count] != 0)
+                            {
+                                count++;
+                            }
+
+                            if ((CUBRIDDataType)type == CUBRIDDataType.CCI_U_TYPE_VARBIT)
+                            {
+                                val = Enumerable.Range(0, count)
+                                                .Where(x => x % 2 == 0)
+                                                .Select(x => Convert.ToByte(Marshal.PtrToStringAnsi(value).Substring(x, 2), 16))
+                                                .ToArray();
+                            }
+                            else val = Encoding.Unicode.GetString(Encoding.Convert(Encoding.UTF8, Encoding.Unicode, v, 0, count));
+                        }
+                        else
+                        {
+                            val = Marshal.PtrToStringAnsi(value);
+                        }
+                    }
+                    else
+                    {
+                        val = null; //String.Empty;
+                    }
+                    break;
+            }
+            return res;
+        }
+
+        public static int cci_get_data(ResultTuple rt, int req_handle, int col_no, int type, CUBRIDConnection conn)
         {
             IntPtr value = IntPtr.Zero;
             int indicator = 0, res=0;
@@ -493,12 +604,13 @@ namespace CUBRID.Data.CUBRIDClient
                     string oid = Marshal.PtrToStringAnsi(value);
                     rt[col_no - 1] = new CUBRIDOid(oid);
                     break;
-                case CUBRIDDataType.CCI_U_TYPE_BIT:             
+                case CUBRIDDataType.CCI_U_TYPE_BIT:
                     T_CCI_BIT bit = new T_CCI_BIT();
                     res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_BIT, ref bit, ref indicator);
-                    byte[] data = conn.GetEncoding().GetBytes(Marshal.PtrToStringAnsi(bit.buf));
+                    byte[] data = new byte[bit.size];
+                    for (int i = 0; i < bit.size; i++) data[i] = Marshal.ReadByte(bit.buf, i);
                     rt[col_no - 1] = new byte[bit.size];
-                    Array.Copy(data,(byte[])rt[col_no - 1] ,bit.size);
+                    Array.Copy(data,(byte[])rt[col_no - 1], bit.size);
                     break;
                 default:
                     res = cci_get_data(req_handle, col_no, (int)T_CCI_A_TYPE.CCI_A_TYPE_STR, ref value, ref indicator);
@@ -512,7 +624,15 @@ namespace CUBRID.Data.CUBRIDClient
                             {
                                 count++;
                             }
-                            rt[col_no - 1] = Encoding.Unicode.GetString(Encoding.Convert(Encoding.UTF8, Encoding.Unicode, v, 0, count));
+
+                            if ((CUBRIDDataType)type == CUBRIDDataType.CCI_U_TYPE_VARBIT)
+                            {
+                                rt[col_no - 1] = Enumerable.Range(0, count)
+                                                .Where(x => x % 2 == 0)
+                                                .Select(x => Convert.ToByte(Marshal.PtrToStringAnsi(value).Substring(x, 2), 16))
+                                                .ToArray();
+                            }
+                            else rt[col_no - 1] = Encoding.Unicode.GetString(Encoding.Convert(Encoding.UTF8, Encoding.Unicode, v, 0, count));
                         }
                         else
                         {
@@ -520,7 +640,7 @@ namespace CUBRID.Data.CUBRIDClient
                         }
                     }
                     else {
-                        rt[col_no - 1] = String.Empty;
+                        rt[col_no - 1] = null; // String.Empty;
                     }
                     if (is_collection_type((CUBRIDDataType)type))
                     {
@@ -601,17 +721,16 @@ namespace CUBRID.Data.CUBRIDClient
                     ret = bind_param(handle, index, a_type, IntPtr.Zero, u_type, flag);
                     break;
                 default:
-                    string bind_value = param.Value.ToString();
-                    if (param.GetParameterEncoding().Equals(conn.GetEncoding()))
+                    byte[] bind_value; // = param.Value.ToString();
+                    if (conn.GetEncoding() != null)
                     {
-                        bind_value = Encoding.Default.GetString(conn.GetEncoding().GetBytes(param.Value.ToString()));
+                        bind_value = conn.GetEncoding().GetBytes(param.Value.ToString());
                     }
                     else
                     {
-                        bind_value = Encoding.Default.GetString(param.GetParameterEncoding().GetBytes(param.Value.ToString()));
+                        bind_value = param.GetParameterEncoding().GetBytes(param.Value.ToString());
                     }
-                    p = Marshal.StringToCoTaskMemAnsi(bind_value);
-                    ret = bind_param(handle, index, a_type, p, u_type, flag);
+                    ret = bind_param(handle, index, a_type, bind_value, u_type, flag);
                     break;
             }
             return ret;                  

@@ -55,7 +55,7 @@ namespace CUBRID.Data.CUBRIDClient
     private bool paramSourceColumnNullMapping = true;
     private DataRowVersion paramSourceVersion = DataRowVersion.Current;
     private object paramValue;
-    private Encoding parameterEncoding = null;
+    private Encoding parameterEncoding = Encoding.Unicode;
     private int pos = 0;
     /// <summary>
     ///   Initializes a new instance of the <see cref="CUBRIDParameter" /> class.
@@ -116,6 +116,7 @@ namespace CUBRID.Data.CUBRIDClient
     {
       paramName = parameterName;
       CUBRIDDataType = cubridDataType;
+      this.Value = "";
     }
 
     /// <summary>

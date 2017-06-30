@@ -2,6 +2,9 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Globalization;
+using CUBRID.Data.CUBRIDClient;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Test.Functional
@@ -88,6 +91,8 @@ namespace Test.Functional
             //
             // TODO: Add test logic here
             //
+            Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en");
+
             TestCases.Test_dinit();
             TestCases.Test_BeginDbTransaction();
             TestCases.Test_init();

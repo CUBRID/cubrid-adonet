@@ -1526,7 +1526,8 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                string tableName = conn.GetTableNameFromOID("@620|1|0");
+                //string tableName = conn.GetTableNameFromOID("@620|1|0");
+                string tableName = conn.GetTableNameFromOID("@3841|1|0");
 
                 Assert.AreEqual("game", tableName);
                 LogStepPass();
