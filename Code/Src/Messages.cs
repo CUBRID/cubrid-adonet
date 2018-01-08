@@ -27,6 +27,7 @@
     DBNameIsEmpty,
     ServerIsEmpty,
     UserIsEmpty,
+    PasswordIsEmpty,
     InvalidPropertyName,
     GetBytesCanBeCalledOnlyOnBinaryColumns,
     BufferIndexMustBeValidIndexInBuffer,

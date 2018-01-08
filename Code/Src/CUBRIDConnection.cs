@@ -609,6 +609,12 @@ namespace CUBRID.Data.CUBRIDClient
       char[] delimiter = { ';' };
       string[] tokens = connString.Split(delimiter);
 
+      server = "";
+      database = "";
+      port = 0;
+      user = "";
+      password = " ";
+
       if (tokens[0] == connString)
       {
         // URL mode
@@ -698,6 +704,10 @@ namespace CUBRID.Data.CUBRIDClient
       if (user == string.Empty || user.Length == 0)
       {
           throw new CUBRIDException(Utils.GetStr(MsgId.UserIsEmpty));
+      }
+      if (password == " ")
+      {
+        throw new CUBRIDException(Utils.GetStr(MsgId.PasswordIsEmpty));
       }
     }
 
