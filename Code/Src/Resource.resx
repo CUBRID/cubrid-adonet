@@ -273,4 +273,7 @@
   <data name="UserIsEmpty" xml:space="preserve">
     <value>The User can't be empty</value>
   </data>
+  <data name="PasswordIsEmpty" xml:space="preserve">
+    <value>The Password can't be empty</value>
+  </data>
 </root>
