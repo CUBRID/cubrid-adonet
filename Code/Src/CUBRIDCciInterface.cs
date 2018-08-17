@@ -156,10 +156,10 @@ namespace CUBRID.Data.CUBRIDClient
         public char is_non_null;
         public short scale;
         public int precision;
-        public string col_name;
-        public string real_attr;
-        public string class_name;
-        public string default_value;
+        public IntPtr col_name;
+        public IntPtr real_attr;
+        public IntPtr class_name;
+        public IntPtr default_value;
         public char is_auto_increment;
         public char is_unique_key;
         public char is_primary_key;
@@ -261,10 +261,12 @@ namespace CUBRID.Data.CUBRIDClient
         [DllImport(dll_name, EntryPoint = "cci_get_result_info", CharSet = CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
         public static extern IntPtr cci_get_result_info_internal(int req_handle, ref int stmt_type, ref int col_num);
 
-        public static ColumnMetaData[] cci_get_result_info(int req_handle)
+        public static ColumnMetaData[] cci_get_result_info(CUBRIDConnection conn, int req_handle)
         {
             int stmt_type = 0;
             int col_num = 0;
+            int n;
+            byte[] name = new byte[254];
 
             IntPtr pt = cci_get_result_info_internal(req_handle, ref stmt_type, ref col_num);
             ColumnMetaData[] item = new ColumnMetaData[col_num];
@@ -288,11 +290,28 @@ namespace CUBRID.Data.CUBRIDClient
                     data.IsShared = int_to_bool(tmp.is_shared - 0);
                     data.IsUniqueKey = int_to_bool(tmp.is_unique_key - 0);
                     data.Precision = tmp.precision;
-                    data.RealName = tmp.class_name;
-                    data.Name = tmp.col_name;
                     data.Scale = tmp.scale;
-                    data.Table = tmp.class_name;
                     data.Type = (CUBRIDDataType)tmp.ext_type;
+
+                    Marshal.Copy(tmp.col_name, name, 0, 254);
+                    for (n = 0; n < 254; n++) if (name[n] == 0) break;
+                    if (conn.GetEncoding().Equals(Encoding.UTF8))
+                        data.Name = Encoding.UTF8.GetString(name, 0, n);
+                    else
+                        data.Name = Encoding.Unicode.GetString(name, 0, n);
+
+                    Marshal.Copy(tmp.class_name, name, 0, 254);
+                    for (n = 0; n < 254; n++) if (name[n] == 0) break;
+                    if (conn.GetEncoding().Equals(Encoding.UTF8))
+                    {
+                        data.RealName = Encoding.UTF8.GetString(name, 0, n);
+                        data.Table = Encoding.UTF8.GetString(name, 0, n);
+                    }
+                    else
+                    {
+                        data.RealName = Encoding.Unicode.GetString(name, 0, n);
+                        data.Table = Encoding.Unicode.GetString(name, 0, n);
+                    }
                 }
                 catch
                 {
