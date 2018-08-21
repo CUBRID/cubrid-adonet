@@ -197,6 +197,7 @@ namespace CUBRID.Data.CUBRIDClient
 
     internal static class CciInterface
     {
+        const int MAX_LENGTH = 254;
         const string dll_name = @"cascci.dll";
         [DllImport(dll_name, EntryPoint = "cci_get_db_version", CharSet = CharSet.Ansi)]
         public static extern int cci_get_db_version(int con_handle, StringBuilder out_buf, int capacity);
@@ -266,7 +267,7 @@ namespace CUBRID.Data.CUBRIDClient
             int stmt_type = 0;
             int col_num = 0;
             int n;
-            byte[] name = new byte[254];
+            byte[] name = new byte[MAX_LENGTH];
 
             IntPtr pt = cci_get_result_info_internal(req_handle, ref stmt_type, ref col_num);
             ColumnMetaData[] item = new ColumnMetaData[col_num];
@@ -293,15 +294,15 @@ namespace CUBRID.Data.CUBRIDClient
                     data.Scale = tmp.scale;
                     data.Type = (CUBRIDDataType)tmp.ext_type;
 
-                    Marshal.Copy(tmp.col_name, name, 0, 254);
-                    for (n = 0; n < 254; n++) if (name[n] == 0) break;
+                    Marshal.Copy(tmp.col_name, name, 0, MAX_LENGTH);
+                    for (n = 0; n < MAX_LENGTH; n++) if (name[n] == 0) break;
                     if (conn.GetEncoding().Equals(Encoding.UTF8))
                         data.Name = Encoding.UTF8.GetString(name, 0, n);
                     else
                         data.Name = Encoding.Unicode.GetString(name, 0, n);
 
-                    Marshal.Copy(tmp.class_name, name, 0, 254);
-                    for (n = 0; n < 254; n++) if (name[n] == 0) break;
+                    Marshal.Copy(tmp.class_name, name, 0, MAX_LENGTH);
+                    for (n = 0; n < MAX_LENGTH; n++) if (name[n] == 0) break;
                     if (conn.GetEncoding().Equals(Encoding.UTF8))
                     {
                         data.RealName = Encoding.UTF8.GetString(name, 0, n);
