@@ -804,7 +804,7 @@ namespace CUBRID.Data.CUBRIDClient
       resultCount = CciInterface.cci_next_result(handle, ref err);
       if (resultCount >= 0)
       {
-          columnMetaData = CciInterface.cci_get_result_info(handle);
+          columnMetaData = CciInterface.cci_get_result_info(conn, handle);
           currentRow = 0;
           resultTuple = new ResultTuple(columnMetaData.Length);
           commandBehavior = CommandBehavior.Default;

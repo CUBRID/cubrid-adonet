@@ -246,8 +246,9 @@ namespace CUBRID.Data.CUBRIDClient
         {
             string sql =
               String.Format(
-                "select attr_name, default_value, is_nullable, `data_type`, prec, scale, charset from db_attribute where class_name like '{0}' and attr_name like '{1}' order by def_order asc",
+                "select * from db_attribute where class_name like '{0}' and attr_name like '{1}' order by def_order asc",
                 tableName, columnRestriction);
+
             using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
             {
                 int pos = 1;
@@ -264,12 +265,31 @@ namespace CUBRID.Data.CUBRIDClient
                         row["COLUMN_NAME"] = colName;
                         row["ORDINAL_POSITION"] = pos++;
 
-                        row["COLUMN_DEFAULT"] = reader.GetString(1);
-                        row["IS_NULLABLE"] = reader.GetString(2).Equals("YES");
-                        row["DATA_TYPE"] = reader.GetString(3);
-                        row["NUMERIC_PRECISION"] = reader.GetInt(4);
-                        row["NUMERIC_SCALE"] = reader.GetInt(5);
-                        row["CHARACTER_SET"] = reader.GetString(6);
+                        for (int i = 0; i < reader.GetColumnCount(); i++) {
+                            switch (reader.GetColumnName(i)) {
+                                case "defalut_value":
+                                    row["COLUMN_DEFAULT"] = reader.GetString(i);
+                                    break;
+                                case "is_nullable":
+                                    row["IS_NULLABLE"] = reader.GetString(i).Equals("YES");
+                                    break;
+                                case "data_type":
+                                    row["DATA_TYPE"] = reader.GetString(i);
+                                    break;
+                                case "prec":
+                                    row["NUMERIC_PRECISION"] = reader.GetInt(i);
+                                    break;
+                                case "scale":
+                                    row["NUMERIC_SCALE"] = reader.GetInt(i);
+                                    break;
+                                case "code_set":
+                                case "charset":
+                                    row["CHARACTER_SET"] = reader.GetString(i);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
 
                         dt.Rows.Add(row);
                     }
@@ -455,7 +475,7 @@ namespace CUBRID.Data.CUBRIDClient
                 throw new CUBRIDException(err.err_msg);
             }
 
-            ColumnMetaData[] columnInfos = CciInterface.cci_get_result_info(handle);
+            ColumnMetaData[] columnInfos = CciInterface.cci_get_result_info(conn, handle);
             CUBRIDCommand command = new CUBRIDCommand(null,conn);
             CUBRIDDataReader reader = new CUBRIDDataReader(command, handle, columnInfos.Length, columnInfos, columnInfos.Length);
 

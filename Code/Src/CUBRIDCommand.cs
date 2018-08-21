@@ -469,8 +469,9 @@ namespace CUBRID.Data.CUBRIDClient
 	      }
 
 	    //T_CCI_COL_INFO res;
-	    columnInfos = CciInterface.cci_get_result_info (handle);
-	    dataReader = new CUBRIDDataReader (this, handle, ret, columnInfos, ret);
+	    columnInfos = CciInterface.cci_get_result_info (conn, handle);
+
+        dataReader = new CUBRIDDataReader (this, handle, ret, columnInfos, ret);
 
 	    return dataReader;
     }
@@ -536,7 +537,7 @@ namespace CUBRID.Data.CUBRIDClient
         throw new CUBRIDException (err.err_msg);
       }
 
-      columnInfos = CciInterface.cci_get_result_info(handle);
+        columnInfos = CciInterface.cci_get_result_info(conn, handle);
 
         if (this.Parameters.Count > 0)
         {
