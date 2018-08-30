@@ -310,7 +310,8 @@ namespace ADOTest
                 }
                 catch (Exception ex)
                 {
-                    Assert.AreEqual("Not allowed to change the 'ConnectionTimeout' property while the connection state is!: Open.", ex.Message);
+                    //Assert.AreEqual("Not allowed to change the 'ConnectionTimeout' property while the connection state is!: Open.", ex.Message);
+                    Assert.AreEqual("Not allowed to change the 'ConnectionString' property while the connection state is!: Open.", ex.Message);
                     LogStepPass();
                 }
 
@@ -797,7 +798,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
 
                 LogTestStep("set correct encoding for sql string");
-                conn.SetEncoding("cp1252");
+                conn.SetEncoding("utf-8");
                 conn.Open();
 
                 DBHelper.ExecuteSQL("drop table if exists t", conn);
@@ -832,7 +833,7 @@ namespace ADOTest
                 LogStepPass();
 
                 LogTestStep("set wrong encoding for sql string");
-                conn.SetEncoding("gbk");
+                conn.SetEncoding("cp1252");
 
                 DBHelper.ExecuteSQL("drop table if exists t", conn);
                 DBHelper.ExecuteSQL("create table t(a int, b varchar(100))", conn);
@@ -847,7 +848,7 @@ namespace ADOTest
                         reader.Read(); //retrieve just one row
 
                         Assert.AreEqual(1, reader.GetInt32(0));
-                        Assert.AreEqual("中文Goodこんにちは", reader.GetString(1));
+                        Assert.AreNotEqual("中文Goodこんにちは", reader.GetString(1));
                     }
                 }
                 LogStepPass();
@@ -887,7 +888,7 @@ namespace ADOTest
                         Assert.AreEqual("中文", reader.GetString(1));
                     }
                 }
-                Assert.AreEqual(Encoding.GetEncoding("gbk"), conn.GetEncoding());
+                Assert.AreEqual(Encoding.GetEncoding("utf-8"), conn.GetEncoding());
                 LogStepPass();
 
                 LogTestStep("test the other encodings");
@@ -1020,11 +1021,12 @@ namespace ADOTest
                 //}
 
                 LogTestStep("Test RESERVED_WORDS");
-                dt = conn.GetSchema("RESERVED_WORDS");
+                dt = conn.GetSchema("RESERVEDWORDS");
+                dt.PrimaryKey = new DataColumn[] { dt.Columns[DbMetaDataColumnNames.ReservedWord] };
                 if (dt != null)
                 {
                     List<string> wordList = new List<string>();
-                    using (StreamReader sr = new StreamReader(@"..\..\..\ADOTest\Resource\ReservedKeyWords.txt"))
+                    using (StreamReader sr = new StreamReader(@"..\..\..\Test\QATest\ADOTest\Resource\ReservedKeyWords.txt"))
                     {
                         string s = null;
                         while ((s = sr.ReadLine()) != null)
@@ -1144,7 +1146,8 @@ namespace ADOTest
                     Assert.AreEqual("INTEGER", dt.Rows[0]["DATA_TYPE"].ToString());
                     Assert.AreEqual((uint)10, (uint)dt.Rows[0]["NUMERIC_PRECISION"]);
                     Assert.AreEqual((uint)0, (uint)dt.Rows[0]["NUMERIC_SCALE"]);
-                    Assert.AreEqual((byte)0, (byte)dt.Rows[0]["CHARACTER_SET"]);
+                    //Assert.AreEqual((byte)0, (byte)dt.Rows[0]["CHARACTER_SET"]);
+                    Assert.AreEqual((string)"Not applicable", (string)dt.Rows[0]["CHARACTER_SET"]);
                     LogStepPass();
                 }
                 else
@@ -1434,7 +1437,8 @@ namespace ADOTest
                 catch (CUBRIDException ex)
                 {
                     Log(ex.Message);
-                    Assert.AreEqual("Object reference not set to an instance of an object.", ex.Message);
+                    //Assert.AreEqual("Object reference not set to an instance of an object.", ex.Message);
+                    Assert.AreEqual("Not supported!", ex.Message);
                     LogStepPass();
                 }
 
