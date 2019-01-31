@@ -186,25 +186,97 @@ namespace ADOTest
             using (CUBRIDConnection conn = new CUBRIDConnection())
             {
                 conn.ConnectionString = DBHelper.connString;
+
                 conn.Open();
 
-                CUBRIDCommand cmd = new CUBRIDCommand("drop table if exists t", conn);
-                int result = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, result);
-                int tablesCount = DBHelper.GetTablesCount("t", conn);
-                Assert.AreEqual(0, tablesCount);
+                LogTestStep("Testing the ExecuteNonQuery"); ;
 
-                cmd.CommandText = "create table t(id integer)";
-                result = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, result);
-                tablesCount = DBHelper.GetTablesCount("t", conn);
-                Assert.AreEqual(1, tablesCount);
 
-                //TODO: add new test cases for insert update delete sql statement
 
+                //Create
+                string sql = "CREATE TABLE ttt(a int, b char(10), c string, d float, e double, f date)";
+                CUBRIDCommand command = new CUBRIDCommand(sql, conn);
+                int retVal;
+                try
+                {
+                    retVal = command.ExecuteNonQuery();
+                    Log("Create : success " + retVal);
+                }
+                catch (CUBRIDException e)
+                { Log(e.ToString()); }
+
+                //Insert
+                sql = "INSERT INTO ttt (a, b, c, d, e, f) VALUES(10, 'abcdefghij', 'aa', '0.5', '0.0000000000001', '2019-01-01')";
+                command = new CUBRIDCommand(sql, conn);
+                try
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        retVal = command.ExecuteNonQuery();
+                        //Log("Insert : " + "" + retVal + " " + command.CommandText);
+                        Assert.AreEqual(1, retVal);
+                    }
+                    Log("Insert : success");
+                }
+                catch (CUBRIDException e)
+                {
+                    sql = "Drop TABLE ttt";
+                    command = new CUBRIDCommand(sql, conn);
+                    command.ExecuteNonQuery();
+                    Log(e.ToString());
+                }
+
+                //Select
+                sql = "Select * from ttt";
+                command = new CUBRIDCommand(sql, conn);
+                try
+                {
+                    retVal = command.ExecuteNonQuery();
+                    Log("Select count : " + retVal + " " + command.CommandText);
+                    Assert.AreEqual(5, retVal);
+                }
+                catch (CUBRIDException e)
+                {
+                    sql = "Drop TABLE ttt";
+                    command = new CUBRIDCommand(sql, conn);
+                    command.ExecuteNonQuery();
+                    Log(e.ToString());
+                }
+
+                //Update
+                sql = "Update ttt set a=0";
+                command = new CUBRIDCommand(sql, conn);
+                try
+                {
+                    retVal = command.ExecuteNonQuery();
+                    Log("Update count : " + retVal + " " + command.CommandText);
+                    Assert.AreEqual(5, retVal);
+                }
+                catch (CUBRIDException e)
+                {
+                    sql = "Drop TABLE ttt";
+                    command = new CUBRIDCommand(sql, conn);
+                    command.ExecuteNonQuery();
+                    Log(e.ToString());
+                }
+
+                //Drop
+                sql = "Drop TABLE ttt";
+                command = new CUBRIDCommand(sql, conn);
+                try
+                {
+                    retVal = command.ExecuteNonQuery();
+                    Log("Drop : success " + retVal);
+                }
+                catch (CUBRIDException e)
+                { Log(e.ToString()); }
+
+                LogTestResult();
+                command.Close();
+                conn.Close();
             }
         }
-
+        
         /// <summary>
         /// Test ExecuteReader
         /// </summary>
