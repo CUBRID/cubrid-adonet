@@ -549,12 +549,12 @@ namespace CUBRID.Data.CUBRIDClient
                 return ret;
             }
 
-            if ((ret = CciInterface.cci_cursor(handle, 1, CCICursorPosition.CCI_CURSOR_FIRST, ref err)) < 0)
+            if ((CciInterface.cci_cursor(handle, 1, CCICursorPosition.CCI_CURSOR_FIRST, ref err)) < 0)
             {
                 throw new CUBRIDException(err.err_msg);
             }
 
-            if ((ret = CciInterface.cci_fetch(handle, ref err)) < 0)
+            if ((CciInterface.cci_fetch(handle, ref err)) < 0)
             {
                 throw new CUBRIDException(err.err_msg);
             }
@@ -571,7 +571,7 @@ namespace CUBRID.Data.CUBRIDClient
 
         }
 
-        ret = CciInterface.cci_close_req_handle(handle);
+        CciInterface.cci_close_req_handle(handle);
         handle = 0;
 
         return ret;
