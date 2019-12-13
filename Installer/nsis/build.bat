@@ -1,7 +1,7 @@
 set FILE_NAME=CUBRID ADO.NET Data Provider 10.1.0.0004
 
 cd ..\..\Code\Src
-call "%VS110COMNTOOLS%vsvars32.bat"
+call "%VS140COMNTOOLS%vsvars32.bat"
 devenv CUBRID.Data.CUBRIDClient.csproj /rebuild "Release|Any CPU" 
 cd ..\..\Installer\nsis
 rd /s/q Build
