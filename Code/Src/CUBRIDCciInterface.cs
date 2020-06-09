@@ -278,8 +278,7 @@ namespace CUBRID.Data.CUBRIDClient
                 try
                 {
                     T_CCI_COL_INFO tmp =
-                        (T_CCI_COL_INFO)Marshal.PtrToStructure((IntPtr)((UInt32)pt +
-                        i * Marshal.SizeOf(typeof(T_CCI_COL_INFO))), typeof(T_CCI_COL_INFO));
+                        (T_CCI_COL_INFO)Marshal.PtrToStructure(pt + i * Marshal.SizeOf(typeof(T_CCI_COL_INFO)), typeof(T_CCI_COL_INFO));
                     data.Type = (CUBRIDDataType)tmp.ext_type;
 
                     data.IsAutoIncrement = int_to_bool(tmp.is_auto_increment - 0);
@@ -459,7 +458,7 @@ namespace CUBRID.Data.CUBRIDClient
             {
                 query_result = new T_CCI_QUERY_RESULT[n_executed];
                 for (int i = 0; i < n_executed; i++) {                    
-                    T_CCI_QUERY_RESULT tmp = (T_CCI_QUERY_RESULT) Marshal.PtrToStructure((IntPtr)((UInt32)qr_ptr + i * Marshal.SizeOf(typeof(T_CCI_QUERY_RESULT))), typeof(T_CCI_QUERY_RESULT));
+                    T_CCI_QUERY_RESULT tmp = (T_CCI_QUERY_RESULT) Marshal.PtrToStructure(qr_ptr + i * Marshal.SizeOf(typeof(T_CCI_QUERY_RESULT)), typeof(T_CCI_QUERY_RESULT));
                     query_result[i] = tmp;
                 }
                 cci_query_result_free(qr_ptr, n_executed);
