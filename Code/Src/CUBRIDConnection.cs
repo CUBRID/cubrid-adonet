@@ -108,7 +108,13 @@ namespace CUBRID.Data.CUBRIDClient
     /// <returns> A new object that is a copy of this instance. </returns>
     object ICloneable.Clone()
     {
-      return Clone();
+        CUBRIDConnection clone = new CUBRIDConnection();
+        string connectionString = ConnectionString;
+        if (connectionString != null) {
+            clone.ConnectionString = connectionString;
+        }
+         
+        return clone; 
     }
 
     /// <summary>
@@ -557,8 +563,9 @@ namespace CUBRID.Data.CUBRIDClient
     {
         if (State == ConnectionState.Closed)
         {
-            throw new CUBRIDException(Utils.GetStr(MsgId.TheConnectionIsNotOpen));
+            /* no raising exception for iBatis environment */
         }
+
         CUBRIDCommand cmd = new CUBRIDCommand();
         cmd.Connection = this;
 
