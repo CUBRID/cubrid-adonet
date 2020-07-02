@@ -157,7 +157,7 @@ namespace CUBRID.Data.CUBRIDClient
         public short scale;
         public int precision;
         public String col_name;
-        public String real_attr
+        public String real_attr;
         public String class_name;
         public String default_value;
         public char is_auto_increment;
