@@ -156,10 +156,10 @@ namespace CUBRID.Data.CUBRIDClient
         public char is_non_null;
         public short scale;
         public int precision;
-        public IntPtr col_name;
-        public IntPtr real_attr;
-        public IntPtr class_name;
-        public IntPtr default_value;
+        public String col_name;
+        public String real_attr;
+        public String class_name;
+        public String default_value;
         public char is_auto_increment;
         public char is_unique_key;
         public char is_primary_key;
@@ -266,8 +266,7 @@ namespace CUBRID.Data.CUBRIDClient
         {
             int stmt_type = 0;
             int col_num = 0;
-            int n;
-            byte[] name = new byte[MAX_TBALE_COLUMN_NAME_LENGTH];
+            byte[] name;
 
             IntPtr pt = cci_get_result_info_internal(req_handle, ref stmt_type, ref col_num);
             ColumnMetaData[] item = new ColumnMetaData[col_num];
@@ -293,24 +292,23 @@ namespace CUBRID.Data.CUBRIDClient
                     data.Scale = tmp.scale;
                     data.Type = (CUBRIDDataType)tmp.ext_type;
 
-                    Marshal.Copy(tmp.col_name, name, 0, MAX_TBALE_COLUMN_NAME_LENGTH);
-                    for (n = 0; n < MAX_TBALE_COLUMN_NAME_LENGTH; n++) if (name[n] == 0) break;
-                    if (conn.GetEncoding().Equals(Encoding.UTF8))
-                        data.Name = Encoding.UTF8.GetString(name, 0, n);
-                    else
-                        data.Name = Encoding.Unicode.GetString(name, 0, n);
-
-                    Marshal.Copy(tmp.class_name, name, 0, MAX_TBALE_COLUMN_NAME_LENGTH);
-                    for (n = 0; n < MAX_TBALE_COLUMN_NAME_LENGTH; n++) if (name[n] == 0) break;
                     if (conn.GetEncoding().Equals(Encoding.UTF8))
                     {
-                        data.RealName = Encoding.UTF8.GetString(name, 0, n);
-                        data.Table = Encoding.UTF8.GetString(name, 0, n);
+                        name = Encoding.UTF8.GetBytes(tmp.col_name);
+                        data.Name = Encoding.UTF8.GetString(name);
+
+                        name = Encoding.UTF8.GetBytes(tmp.class_name);
+                        data.RealName = Encoding.UTF8.GetString(name);
+                        data.Table = Encoding.UTF8.GetString(name);
                     }
                     else
                     {
-                        data.RealName = Encoding.Unicode.GetString(name, 0, n);
-                        data.Table = Encoding.Unicode.GetString(name, 0, n);
+                        name = Encoding.Unicode.GetBytes(tmp.col_name);
+                        data.Name = Encoding.Unicode.GetString(name);
+
+                        name = Encoding.Unicode.GetBytes(tmp.class_name);
+                        data.RealName = Encoding.Unicode.GetString(name);
+                        data.Table = Encoding.Unicode.GetString(name);
                     }
                 }
                 catch
