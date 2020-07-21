@@ -589,6 +589,9 @@ namespace CUBRID.Data.CUBRIDClient
     {
       if (conn.State == ConnectionState.Closed)
         return;
+
+      CciInterface.cci_close_req_handle(handle);
+      handle = 0;
     }
 
     private bool IsAllParameterBound()
