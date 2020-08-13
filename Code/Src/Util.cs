@@ -66,5 +66,17 @@ namespace CUBRID.Data.CUBRIDClient
 
       return rm.GetString(Messages.GetStrFromId(id), ci) + "!";
     }
+    
+    internal static IntPtr AddIntPtr(IntPtr ptr, int offset)
+    {
+        switch (IntPtr.Size)
+        {
+            case sizeof(Int32):
+                return new IntPtr(ptr.ToInt32() + offset);
+
+            default:
+                return new IntPtr(ptr.ToInt32() + +offset);
+        }
+    }
   }
 }

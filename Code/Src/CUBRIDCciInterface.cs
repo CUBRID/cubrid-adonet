@@ -276,10 +276,12 @@ namespace CUBRID.Data.CUBRIDClient
                 ColumnMetaData data = new ColumnMetaData();
                 try
                 {
-                    T_CCI_COL_INFO tmp =
-                        (T_CCI_COL_INFO)Marshal.PtrToStructure(pt + i * Marshal.SizeOf(typeof(T_CCI_COL_INFO)), typeof(T_CCI_COL_INFO));
-                    data.Type = (CUBRIDDataType)tmp.ext_type;
+                    T_CCI_COL_INFO tmp;
+                    IntPtr data_ptr;
+                    data_ptr = Utils.AddIntPtr(pt, i * Marshal.SizeOf(typeof(T_CCI_COL_INFO)));
+                    tmp = (T_CCI_COL_INFO)Marshal.PtrToStructure(data_ptr, typeof(T_CCI_COL_INFO));
 
+                    data.Type = (CUBRIDDataType)tmp.ext_type;
                     data.IsAutoIncrement = int_to_bool(tmp.is_auto_increment - 0);
                     data.IsForeignKey = int_to_bool(tmp.is_foreign_key - 0);
                     data.IsNullable = int_to_bool(tmp.is_non_null - 0) == true ? false : true;
@@ -455,8 +457,11 @@ namespace CUBRID.Data.CUBRIDClient
             else 
             {
                 query_result = new T_CCI_QUERY_RESULT[n_executed];
-                for (int i = 0; i < n_executed; i++) {                    
-                    T_CCI_QUERY_RESULT tmp = (T_CCI_QUERY_RESULT) Marshal.PtrToStructure(qr_ptr + i * Marshal.SizeOf(typeof(T_CCI_QUERY_RESULT)), typeof(T_CCI_QUERY_RESULT));
+                for (int i = 0; i < n_executed; i++) {
+                    T_CCI_QUERY_RESULT tmp;
+                    IntPtr data_ptr;
+                    data_ptr = Utils.AddIntPtr(qr_ptr, i * Marshal.SizeOf(typeof(T_CCI_QUERY_RESULT)));
+                    tmp = (T_CCI_QUERY_RESULT)Marshal.PtrToStructure(data_ptr, typeof(T_CCI_QUERY_RESULT));
                     query_result[i] = tmp;
                 }
                 cci_query_result_free(qr_ptr, n_executed);
