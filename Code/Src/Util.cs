@@ -75,7 +75,7 @@ namespace CUBRID.Data.CUBRIDClient
                 return new IntPtr(ptr.ToInt32() + offset);
 
             default:
-                return new IntPtr(ptr.ToInt32() + +offset);
+                return new IntPtr(ptr.ToInt64() + offset);
         }
     }
   }
