@@ -1,4 +1,4 @@
-set FILE_NAME=CUBRID ADO.NET Data Provider 10.1.0.0004
+set FILE_NAME=CUBRID ADO.NET Data Provider 10.2.0.0001
 
 cd ..\..\Code\Src
 call "%VS140COMNTOOLS%vsvars32.bat"
