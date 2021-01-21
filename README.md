@@ -26,8 +26,8 @@ https://github.com/CUBRID
  License
  -------
 
-CUBRID is distributed under two licenses, Database engine is under GPL v2 or
-later and the APIs are under BSD license.
+CUBRID is distributed under two licenses, Database engine is under Apache License 2.0
+and the APIs are under BSD license.
 
 For more information, visit the web site:
 https://www.cubrid.org/manual/en/10.1/release_note/index.html#license
