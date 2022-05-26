@@ -1,7 +1,7 @@
 ;--------------------------------
 ; CUBRID ADO.NET Data Provider Installer/Uninstaller
-; Ver 11.0.0
-; Last update: JAN 2021
+; Ver 11.1.0
+; Last update: MAY 2022
 ;--------------------------------
 
 SetCompressor /solid lzma
@@ -38,19 +38,19 @@ SetCompressor /solid lzma
 !addplugindir "." 
 
 ; The name of the installer
-Name "CUBRID ADO.NET Data Provider 11.0.0"
+Name "CUBRID ADO.NET Data Provider 11.1.0"
 
 ; The file to write
-OutFile "CUBRID ADO.NET Data Provider 11.0.0.0001.exe"
+OutFile "CUBRID ADO.NET Data Provider 11.1.0.0001.exe"
 
 ;required on Windows Vista and Windows 7
 RequestExecutionLevel user
 
 ; The default installation directory
-InstallDir "$PROGRAMFILES\CUBRID\CUBRID ADO.NET Data Provider 11.0.0"
+InstallDir "$PROGRAMFILES\CUBRID\CUBRID ADO.NET Data Provider 11.1.0"
 
 ; Registry key to check for installation directory
-InstallDirRegKey HKLM "Software\CUBRID\CUBRID ADO.NET Data Provider 11.0.0" "Install_Dir"
+InstallDirRegKey HKLM "Software\CUBRID\CUBRID ADO.NET Data Provider 11.1.0" "Install_Dir"
 
 ShowInstDetails show
 ShowUnInstDetails show
@@ -100,13 +100,13 @@ Section "CUBRID ADO.NET Data Provider Files" DataProviderFiles
   ${EndIf}
 
   ; Write the installation path
-  WriteRegStr HKLM "SOFTWARE\CUBRID\CUBRID ADO.NET Data Provider 11.0.0" "Install_Dir" "$INSTDIR"
+  WriteRegStr HKLM "SOFTWARE\CUBRID\CUBRID ADO.NET Data Provider 11.1.0" "Install_Dir" "$INSTDIR"
   
   ; Write the uninstall information
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.0.0" "DisplayName" "CUBRID ADO.NET Data Provider 11.0.0"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.0.0" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.0.0" "NoModify" 1
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.0.0" "NoRepair" 1
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.1.0" "DisplayName" "CUBRID ADO.NET Data Provider 11.1.0"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.1.0" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.1.0" "NoModify" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.1.0" "NoRepair" 1
   ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
   WriteRegExpandStr HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path" "$0;$INSTDIR;"
   WriteUninstaller "uninstall.exe"
@@ -117,9 +117,9 @@ SectionEnd
 ; Optional section (can be disabled by the user)
 Section "Start Menu shortcuts" DataProviderShortcuts
 
-  CreateDirectory "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.0.0"
-  CreateShortCut "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.0.0\CUBRID ADO.NET Data Provider Help file.lnk" "$INSTDIR\CUBRID ADO.NET Data Provider.chm" "" "$INSTDIR\CUBRID ADO.NET Data Provider.chm" 0
-  CreateShortCut "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.0.0\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+  CreateDirectory "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.1.0"
+  CreateShortCut "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.1.0\CUBRID ADO.NET Data Provider Help file.lnk" "$INSTDIR\CUBRID ADO.NET Data Provider.chm" "" "$INSTDIR\CUBRID ADO.NET Data Provider.chm" 0
+  CreateShortCut "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.1.0\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   
 SectionEnd
 
@@ -149,13 +149,13 @@ FunctionEnd
 Function un.onUninstSuccess
 
   HideWindow
-  MessageBox MB_ICONINFORMATION|MB_OK "The CUBRID ADO.NET Data Provider 11.0.0 was successfully removed from your computer."
+  MessageBox MB_ICONINFORMATION|MB_OK "The CUBRID ADO.NET Data Provider 11.1.0 was successfully removed from your computer."
 
 FunctionEnd
 
 
 Function un.onInit
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove the CUBRID ADO.NET Data Provider 11.0.0 and all of its components?" IDYES +2
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove the CUBRID ADO.NET Data Provider 11.1.0 and all of its components?" IDYES +2
   Abort
 FunctionEnd
 
@@ -191,14 +191,14 @@ Section "Uninstall"
 
   RMDir /r "$INSTDIR"
 
-  Delete "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.0.0\CUBRID ADO.NET Data Provider Help file.lnk"
-  Delete "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.0.0\Uninstall.lnk"
+  Delete "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.1.0\CUBRID ADO.NET Data Provider Help file.lnk"
+  Delete "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.1.0\Uninstall.lnk"
 
-  RMDir /r "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.0.0"
+  RMDir /r "$SMPROGRAMS\CUBRID\CUBRID ADO.NET Data Provider 11.1.0"
 
   ; Remove registry keys
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.0.0"
-  DeleteRegKey HKLM "SOFTWARE\CUBRID\CUBRID ADO.NET Data Provider 11.0.0"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CUBRID ADO.NET Data Provider 11.1.0"
+  DeleteRegKey HKLM "SOFTWARE\CUBRID\CUBRID ADO.NET Data Provider 11.1.0"
 
   ReadRegStr $R0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
   ${WordReplace} $R0 ";$INSTDIR;" "" "+" $R1
