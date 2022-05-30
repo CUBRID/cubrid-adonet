@@ -1,0 +1,14 @@
+Code/.vs/
+Code/Src/bin/
+Code/Src/obj/
+Code/Test/Functional/bin/
+Code/Test/Functional/obj/
+Code/Test/NHibernate/bin/
+Code/Test/NHibernate/obj/
+Code/Test/QATest/.vs/
+Code/Test/QATest/ADOTest/bin/
+Code/Test/QATest/ADOTest/obj/
+Code/Test/UI/bin/
+Code/Test/UI/obj/
+Code/TestResults/
+script/cubrid-cci/
