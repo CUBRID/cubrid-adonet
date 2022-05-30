@@ -88,7 +88,7 @@ namespace ADOTest
                 LogTestStep("Begin a transaction, then rollback");
                 CUBRIDTransaction transaction = conn.BeginTransaction();
                 DBHelper.ExecuteSQL("create table t(idx integer)", conn);
-                int tablesCount = DBHelper.GetTablesCount("t", conn);
+                Int64 tablesCount = DBHelper.GetTablesCount("t", conn);
                 Assert.AreEqual(1, tablesCount);
 
                 transaction.Rollback();
@@ -130,7 +130,7 @@ namespace ADOTest
                 DBHelper.ExecuteSQL("create table t(idx integer)", conn);
 
                 transaction.Commit();
-                int tablesCount = DBHelper.GetTablesCount("t", conn);
+                Int64 tablesCount = DBHelper.GetTablesCount("t", conn);
                 Assert.AreEqual(1, tablesCount);
 
                 try

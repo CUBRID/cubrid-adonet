@@ -28,7 +28,7 @@ namespace Test.Functional
           command.ExecuteNonQuery();
         }
 
-        int tablesCount = GetTablesCount("t", conn);
+        Int64 tablesCount = GetTablesCount("t", conn);
         Debug.Assert(tablesCount == 1);
 
         conn.Rollback();

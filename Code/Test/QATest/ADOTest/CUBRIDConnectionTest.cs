@@ -628,7 +628,7 @@ namespace ADOTest
 
                 conn.BeginTransaction();
                 DBHelper.ExecuteSQL("create table t(idx integer)", conn);
-                int tablesCount = DBHelper.GetTablesCount("t", conn);
+                Int64 tablesCount = DBHelper.GetTablesCount("t", conn);
                 Assert.AreEqual(1, tablesCount);
 
                 conn.Close();
@@ -636,7 +636,7 @@ namespace ADOTest
                 Log("Verify the Connection is closed by feching some data");
                 try
                 {
-                    int count = DBHelper.GetTableRowsCount("db_class", conn);
+                    Int64 count = DBHelper.GetTableRowsCount("db_class", conn);
                 }
                 catch (Exception ex)
                 {
@@ -673,7 +673,7 @@ namespace ADOTest
                 LogTestStep("Begin a transaction, then rollback");
                 conn.BeginTransaction();
                 DBHelper.ExecuteSQL("create table t(idx integer)", conn);
-                int tablesCount = DBHelper.GetTablesCount("t", conn);
+                Int64 tablesCount = DBHelper.GetTablesCount("t", conn);
                 Assert.AreEqual(1, tablesCount);
 
                 conn.Rollback();
@@ -778,7 +778,7 @@ namespace ADOTest
                 cmd.CommandText = "create table t(idx integer)";
 
                 cmd.ExecuteNonQuery();
-                int tablesCount = DBHelper.GetTablesCount("t", conn);
+                Int64 tablesCount = DBHelper.GetTablesCount("t", conn);
                 Assert.AreEqual(1, tablesCount);
 
                 //revert the test db
@@ -925,7 +925,7 @@ namespace ADOTest
         public void SetIsolationLevel_Test()
         {
             string sqlTablesCount = "select count(*) from db_class";
-            int tablesCount, newTableCount;
+            Int64 tablesCount, newTableCount;
 
             using (CUBRIDConnection conn = new CUBRIDConnection())
             {
@@ -935,14 +935,14 @@ namespace ADOTest
                 DBHelper.ExecuteSQL("drop table if exists t", conn);
                 conn.SetAutoCommit(false);
 
-                tablesCount = (int)DBHelper.GetSingleValue(sqlTablesCount, conn);
+                tablesCount = (Int64)DBHelper.GetSingleValue(sqlTablesCount, conn);
                 DBHelper.ExecuteSQL("create table t(id int)", conn);
-                newTableCount = (int)DBHelper.GetSingleValue(sqlTablesCount, conn);
+                newTableCount = (Int64)DBHelper.GetSingleValue(sqlTablesCount, conn);
                 //Verify table was created
                 Assert.AreEqual(tablesCount + 1, newTableCount);
 
                 conn.Commit();
-                newTableCount = (int)DBHelper.GetSingleValue(sqlTablesCount, conn);
+                newTableCount = (Int64)DBHelper.GetSingleValue(sqlTablesCount, conn);
                 Assert.AreEqual(tablesCount + 1, newTableCount);
 
                 DBHelper.ExecuteSQL("drop table if exists t", conn);
@@ -1132,7 +1132,7 @@ namespace ADOTest
                 }
 
                 LogTestStep("Test COLUMNS");
-                dt = conn.GetSchema("COLUMNS", new String[] { "game", "event_code" });
+                dt = conn.GetSchema("COLUMNS", new String[] { "public.game", "event_code" });
                 if (dt != null)
                 {
                     Assert.AreEqual(1, dt.Rows.Count);
@@ -1156,7 +1156,7 @@ namespace ADOTest
                 }
 
                 LogTestStep("Test INDEXES");
-                dt = conn.GetSchema("INDEXES", new String[] { "nation", "code" });
+                dt = conn.GetSchema("INDEXES", new String[] { "public.nation", "code" });
                 if (dt != null)
                 {
                     Assert.AreEqual(1, dt.Rows.Count);
@@ -1177,7 +1177,7 @@ namespace ADOTest
                 }
 
                 LogTestStep("Test INDEXE_COLUMNS");
-                dt = conn.GetSchema("INDEX_COLUMNS", new String[] { "nation", "pk_nation_code" });
+                dt = conn.GetSchema("INDEX_COLUMNS", new String[] { "public.nation", "pk_nation_code" });
                 if (dt != null)
                 {
                     Assert.AreEqual(1, dt.Rows.Count);
@@ -1196,7 +1196,7 @@ namespace ADOTest
                 }
 
                 Log("Test FOREIGN_KEYS");
-                dt = conn.GetSchema("FOREIGN_KEYS", new String[] { "game", "fk_game_athlete_code" });
+                dt = conn.GetSchema("FOREIGN_KEYS", new String[] { "public.game", "fk_game_athlete_code" });
                 if (dt != null)
                 {
                     Assert.AreEqual(2, dt.Rows.Count);
@@ -1245,7 +1245,7 @@ namespace ADOTest
         [TestMethod()]
         public void AutoCommit_SetAfterOpen_Test()
         {
-            int tablesCount;
+            Int64 tablesCount;
 
             Log("Test SetAutoCommit, GetAutoCommit, AutoCommit");
 
@@ -1257,7 +1257,7 @@ namespace ADOTest
 
                 conn.SetAutoCommit(false);
 
-                tablesCount = (int)DBHelper.GetSingleValue("select count(*) from db_class", conn);
+                tablesCount = (Int64)DBHelper.GetSingleValue("select count(*) from db_class", conn);
 
                 //Create table
                 DBHelper.ExecuteSQL("create table xyz(id int)", conn);
@@ -1273,7 +1273,7 @@ namespace ADOTest
                 conn2.Open();
 
                 //Verify table was not created
-                Assert.AreEqual(tablesCount, (int)DBHelper.GetSingleValue("select count(*) from db_class", conn2));
+                Assert.AreEqual(tablesCount, (Int64)DBHelper.GetSingleValue("select count(*) from db_class", conn2));
 
                 LogStepPass();
 
@@ -1292,7 +1292,7 @@ namespace ADOTest
                 conn3.Open();
 
                 //Verify table was created
-                Assert.AreEqual(tablesCount + 1, (int)DBHelper.GetSingleValue("select count(*) from db_class", conn3));
+                Assert.AreEqual(tablesCount + 1, (Int64)DBHelper.GetSingleValue("select count(*) from db_class", conn3));
 
                 LogStepPass();
 
@@ -1308,7 +1308,7 @@ namespace ADOTest
                 conn4.Open();
 
                 //Verify table was deleted
-                Assert.AreEqual(tablesCount, (int)DBHelper.GetSingleValue("select count(*) from db_class", conn4));
+                Assert.AreEqual(tablesCount, (Int64)DBHelper.GetSingleValue("select count(*) from db_class", conn4));
 
                 LogStepPass();
             }
@@ -1533,7 +1533,7 @@ namespace ADOTest
                 //string tableName = conn.GetTableNameFromOID("@620|1|0");
                 string tableName = conn.GetTableNameFromOID("@3841|1|0");
 
-                Assert.AreEqual("game", tableName);
+                Assert.AreEqual("public.game", tableName);
                 LogStepPass();
 
                 LogTestResult();
@@ -1750,13 +1750,13 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                string queryPlan = conn.GetQueryPlanOnly("select * from athlete order by 1 desc");
+                string queryPlan = conn.GetQueryPlanOnly("select * from public.athlete order by 1 desc");
 
                 //the string I get from Linux does not cotain tab and enter
                 Console.WriteLine(queryPlan);
                 Assert.IsTrue(queryPlan.Contains("Join graph segments (f indicates final):"));
-                Assert.IsTrue(queryPlan.Contains("class: athlete node[0]"));
-                Assert.IsTrue(queryPlan.Contains("select athlete.code, athlete.[name], athlete.gender, athlete.nation_code, athlete.event from athlete athlete order by 1 desc"));
+                Assert.IsTrue(queryPlan.Contains("class: public.athlete node[0]"));
+                Assert.IsTrue(queryPlan.Contains("select [public.athlete].code, [public.athlete].[name], [public.athlete].gender, [public.athlete].nation_code, [public.athlete].event from [public.athlete] [public.athlete] order by 1 desc"));
                 LogStepPass();
                 LogTestResult();
             }

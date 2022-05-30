@@ -31,14 +31,14 @@ namespace ADOTest.TestHelper
             }
         }
 
-        public static int GetTableRowsCount(string tableName, CUBRIDConnection conn)
+        public static Int64 GetTableRowsCount(string tableName, CUBRIDConnection conn)
         {
-            int count = -1;
+            Int64 count = -1;
             string sql = "select count(*) from `" + tableName + "`";
 
             using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
             {
-                count = (int)cmd.ExecuteScalar();
+                count = (Int64)cmd.ExecuteScalar();
             }
 
             return count;
@@ -50,14 +50,14 @@ namespace ADOTest.TestHelper
             ExecuteSQL("create table t(a int, b char(10), c string, d float, e double, f date)", conn);
         }
 
-        public static int GetTablesCount(string tableName, CUBRIDConnection conn)
+        public static Int64 GetTablesCount(string tableName, CUBRIDConnection conn)
         {
-            int count = 0;
+            Int64 count = 0;
             string sql = "select count(*) from db_class where class_name = '" + tableName + "'";
 
             using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
             {
-                count = (int)cmd.ExecuteScalar();
+                count = (Int64)cmd.ExecuteScalar();
             }
 
             return count;

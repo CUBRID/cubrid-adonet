@@ -49,7 +49,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                String sql = "select * from nation order by `code` asc";
+                String sql = "select * from public.nation order by `code` asc";
 
                 LogTestStep("retrieve just one row");
                 using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
@@ -84,7 +84,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                String sql = "select count(*) from nation; select count(*) from athlete";
+                String sql = "select count(*) from public.nation; select count(*) from public.athlete";
                 using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
                 {
                     using (CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader())
@@ -100,7 +100,7 @@ namespace ADOTest
                     }
                 }
 
-                sql = "select * from nation order by code asc; select * from athlete order by name asc";
+                sql = "select * from public.nation order by code asc; select * from public.athlete order by name asc";
                 using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
                 {
                     using (CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader())

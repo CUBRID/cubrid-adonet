@@ -94,7 +94,7 @@ namespace CUBRID.Data.CUBRIDClient
                                                          catalog);
                             using (CUBRIDCommand cmd = new CUBRIDCommand(sqlDb, conn))
                             {
-                                int count = (int)cmd.ExecuteScalar();
+                                Int64 count = (Int64)cmd.ExecuteScalar();
 
                                 if (count > 0)
                                 {

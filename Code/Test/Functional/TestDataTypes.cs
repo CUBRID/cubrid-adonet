@@ -739,7 +739,7 @@ namespace Test.Functional
         catch (Exception exp)
         {
           string expected = exp.Message.Substring(0, exp.Message.LastIndexOf("["));
-          Debug.Assert(expected == "Semantic: before ' , 'China');'\nCannot coerce 'Peking' to type enum. insert into table11 table11 (table11.city, table11.nationali...");
+          Debug.Assert(expected == "Semantic: before ' , 'China');'\nCannot coerce 'Peking' to type enum. insert into [dba.table11] [dba.table11] ([dba.table11].city,...");
         }
 
         TestCases.ExecuteSQL("drop table11;", conn);

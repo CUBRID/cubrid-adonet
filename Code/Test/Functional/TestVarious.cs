@@ -175,7 +175,7 @@ namespace Test.Functional
           }
           catch (Exception ex)
           {
-            string r = "Syntax: Unknown class \"xyz\". select count(*) from xyz";
+            string r = "Syntax: Unknown class \"dba.xyz\". select count(*) from [dba.xyz]";
             Debug.Assert(ex.Message.Substring(0,r.Length) == r);//todo
           }
         }
@@ -199,7 +199,7 @@ namespace Test.Functional
           }
           catch (Exception ex)
           {
-              string r = "Syntax: Unknown class \"xyz\". select count(*) from xyz";
+              string r = "Syntax: Unknown class \"dba.xyz\". select count(*) from [dba.xyz]";
               Debug.Assert(ex.Message.Substring(0, r.Length) == r);//todo
           }
         }

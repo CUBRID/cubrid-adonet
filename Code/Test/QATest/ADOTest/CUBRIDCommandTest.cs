@@ -28,7 +28,7 @@ namespace ADOTest
 
             CUBRIDCommand cmd = new CUBRIDCommand();
             cmd.Connection = conn;
-            cmd.CommandText = "select * from nation order by code asc";
+            cmd.CommandText = "select * from public.nation order by code asc";
 
             conn.Open();
             CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader();
@@ -53,7 +53,7 @@ namespace ADOTest
             CUBRIDConnection conn = new CUBRIDConnection();
             conn.ConnectionString = DBHelper.connString;
 
-            string sql = "select * from nation order by code asc";
+            string sql = "select * from public.nation order by code asc";
             CUBRIDCommand cmd = new CUBRIDCommand(sql);
             cmd.Connection = conn;
 
@@ -80,7 +80,7 @@ namespace ADOTest
             CUBRIDConnection conn = new CUBRIDConnection();
             conn.ConnectionString = DBHelper.connString;
 
-            string sql = "select * from nation order by code asc";
+            string sql = "select * from public.nation order by code asc";
             CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
             conn.Open();
@@ -288,7 +288,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                string sql = "select * from nation order by code asc";
+                string sql = "select * from public.nation order by code asc";
                 using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
                 {
                     using (CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader())
@@ -324,7 +324,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                string sql = "select * from nation order by code asc";
+                string sql = "select * from public.nation order by code asc";
                 CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
                 LogTestStep("Test CommandBehavior.CloseConnection");
@@ -382,7 +382,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                string sql = "select * from nation order by code asc";
+                string sql = "select * from public.nation order by code asc";
                 CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
                 LogTestStep("Test CommandBehavior.SingleRow");
@@ -435,7 +435,7 @@ namespace ADOTest
                 conn.ConnectionString = DBHelper.connString;
                 conn.Open();
 
-                string sql = "select * from nation order by code asc";
+                string sql = "select * from public.nation order by code asc";
                 CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
                 LogTestStep("Test ExecuteScalar - return a value");
@@ -594,7 +594,7 @@ namespace ADOTest
             {
                 conn.ConnectionString = DBHelper.connString;
 
-                string sql = "select * from nation order by code asc";
+                string sql = "select * from public.nation order by code asc";
                 CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
                 conn.Open();

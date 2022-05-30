@@ -114,7 +114,7 @@ namespace ADOTest
             conn.ConnectionString = conn_string;
             conn.Open();
 
-            String sql = "select * from nation;";
+            String sql = "select * from public.nation;";
             CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
             CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader();
@@ -138,7 +138,7 @@ namespace ADOTest
             conn.ConnectionString = conn_string;
             conn.Open();
 
-            String sql = "select s_name from code where f_name = 'Mixed'; select s_name from code where f_name = 'Woman';";
+            String sql = "select s_name from public.code where f_name = 'Mixed'; select s_name from public.code where f_name = 'Woman';";
             CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
             CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader();
@@ -168,7 +168,7 @@ namespace ADOTest
             conn.ConnectionString = conn_string;
             conn.Open();
 
-            String sql = "select s_name from code where s_name='X'; select name from nation where name='Algeria';";
+            String sql = "select s_name from public.code where s_name='X'; select name from public.nation where name='Algeria';";
             CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 
             CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader();
@@ -598,13 +598,13 @@ namespace ADOTest
             Assert.IsNotNull(dt_test);
             dt_test = conn.GetSchema("Views");
             Assert.IsNotNull(dt_test);
-            dt_test = conn.GetSchema("Columns", new String[] { "game", "event_code" });
+            dt_test = conn.GetSchema("Columns", new String[] { "public.game", "event_code" });
             Assert.IsNotNull(dt_test);
-            dt_test = conn.GetSchema("Indexes", new String[] { "nation", "code" });
+            dt_test = conn.GetSchema("Indexes", new String[] { "public.nation", "code" });
             Assert.IsNotNull(dt_test);
-            dt_test = conn.GetSchema("Index_Columns", new String[] { "nation", "pk_nation_code" });
+            dt_test = conn.GetSchema("Index_Columns", new String[] { "public.nation", "pk_nation_code" });
             Assert.IsNotNull(dt_test);
-            dt_test = conn.GetSchema("FOREIGN_KEYS", new String[] { "game", "fk_game_athlete_code" });
+            dt_test = conn.GetSchema("FOREIGN_KEYS", new String[] { "public.game", "fk_game_athlete_code" });
             Assert.IsNotNull(dt_test);
 
             dt_test = conn.GetSchema("INVALID");
