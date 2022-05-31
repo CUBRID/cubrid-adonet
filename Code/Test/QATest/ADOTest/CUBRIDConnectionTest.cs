@@ -1216,7 +1216,6 @@ namespace ADOTest
                     LogStepFail();
                 }
 
-
                 try
                 {
                     DBHelper.ExecuteSQL("drop function athlete_info", conn);

@@ -564,7 +564,7 @@ namespace ADOTest
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsPrimaryKey, true);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsForeignKey, false);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsNullable, false);
-                Assert.AreEqual(cmdClone.ColumnInfos[0].RealName, "t");
+                Assert.AreEqual(cmdClone.ColumnInfos[0].RealName, "dba.t");
                 Assert.AreEqual(cmdClone.ColumnInfos[0].Precision, 10);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].Scale, 0);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsAutoIncrement, false);
@@ -572,7 +572,7 @@ namespace ADOTest
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsReverseUnique, false);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].IsShared, false);
                 Assert.AreEqual(cmdClone.ColumnInfos[0].Type, CUBRIDDataType.CCI_U_TYPE_INT);
-                Assert.AreEqual(cmdClone.ColumnInfos[0].Table, "t");
+                Assert.AreEqual(cmdClone.ColumnInfos[0].Table, "dba.t");
                 LogStepPass();
                 adapter.Dispose();
                 cmd.Close();
