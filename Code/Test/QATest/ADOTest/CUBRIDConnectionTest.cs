@@ -1132,7 +1132,7 @@ namespace ADOTest
                 }
 
                 LogTestStep("Test COLUMNS");
-                dt = conn.GetSchema("COLUMNS", new String[] { "public.game", "event_code" });
+                dt = conn.GetSchema("COLUMNS", new String[] { "game", "event_code" });
                 if (dt != null)
                 {
                     Assert.AreEqual(1, dt.Rows.Count);
@@ -1156,7 +1156,7 @@ namespace ADOTest
                 }
 
                 LogTestStep("Test INDEXES");
-                dt = conn.GetSchema("INDEXES", new String[] { "public.nation", "code" });
+                dt = conn.GetSchema("INDEXES", new String[] { "nation", "code" });
                 if (dt != null)
                 {
                     Assert.AreEqual(1, dt.Rows.Count);
@@ -1177,7 +1177,7 @@ namespace ADOTest
                 }
 
                 LogTestStep("Test INDEXE_COLUMNS");
-                dt = conn.GetSchema("INDEX_COLUMNS", new String[] { "public.nation", "pk_nation_code" });
+                dt = conn.GetSchema("INDEX_COLUMNS", new String[] { "nation", "pk_nation_code" });
                 if (dt != null)
                 {
                     Assert.AreEqual(1, dt.Rows.Count);
@@ -1202,7 +1202,7 @@ namespace ADOTest
                     Assert.AreEqual(2, dt.Rows.Count);
                     //Assert.AreEqual("athlete", dt.Rows[0]["PKTABLE_NAME"].ToString());
                     Assert.AreEqual("code", dt.Rows[0]["PKCOLUMN_NAME"].ToString());
-                    Assert.AreEqual("game", dt.Rows[0]["FKTABLE_NAME"].ToString());
+                    Assert.AreEqual("public.game", dt.Rows[0]["FKTABLE_NAME"].ToString());
                     //Assert.AreEqual("athlete_code", dt.Rows[0]["FKCOLUMN_NAME"].ToString());
                     Assert.AreEqual((short)1, (short)dt.Rows[0]["KEY_SEQ"]);
                     Assert.AreEqual((short)1, (short)dt.Rows[0]["UPDATE_ACTION"]);
@@ -1216,9 +1216,22 @@ namespace ADOTest
                     LogStepFail();
                 }
 
+
+                try
+                {
+                    DBHelper.ExecuteSQL("drop function athlete_info", conn);
+                }
+                catch { }
+
+                string sql = "CREATE FUNCTION athlete_info (string1 CHAR, string2 CHAR, string3 CHAR, string4 CHAR) RETURN INTEGER AS LANGUAGE JAVA NAME 'Athlete.Athlete_Insert(java.lang.String, java.lang.String, java.lang.String, java.lang.String) return int'";
+                using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
                 LogTestStep("Test PROCEDURES");
                 dt = conn.GetSchema("PROCEDURES", new String[] { "athlete_info" });
-                if (dt != null && dt.Rows.Count>0)
+                if (dt != null && dt.Rows.Count > 0)
                 {
                     Assert.AreEqual("athlete_info", dt.Rows[0]["PROCEDURE_NAME"].ToString());
                     Assert.AreEqual("FUNCTION", dt.Rows[0]["PROCEDURE_TYPE"].ToString());
@@ -1234,6 +1247,12 @@ namespace ADOTest
                 {
                     LogStepFail();
                 }
+
+                try
+                {
+                    DBHelper.ExecuteSQL("drop function athlete_info", conn);
+                }
+                catch { }
 
                 LogTestResult();
             }
