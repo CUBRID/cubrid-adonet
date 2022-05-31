@@ -18,14 +18,14 @@ namespace Test.Functional
         conn.Open();
 
         CUBRIDSchemaProvider schema = new CUBRIDSchemaProvider(conn);
-        DataTable dt = schema.GetForeignKeys(new string[] { "game" });
+        DataTable dt = schema.GetForeignKeys(new string[] { "public.game" });
 
         Debug.Assert(dt.Columns.Count == 9);
         Debug.Assert(dt.Rows.Count == 2);
 
-        Debug.Assert(dt.Rows[1][0].ToString() == "event");
+        Debug.Assert(dt.Rows[1][0].ToString() == "public.event");
         Debug.Assert(dt.Rows[1][1].ToString() == "code");
-        Debug.Assert(dt.Rows[1][2].ToString() == "game");
+        Debug.Assert(dt.Rows[1][2].ToString() == "pulbic.game");
         Debug.Assert(dt.Rows[1][3].ToString() == "event_code");
         Debug.Assert(dt.Rows[1][4].ToString() == "1");
         Debug.Assert(dt.Rows[1][5].ToString() == "1");
@@ -33,9 +33,9 @@ namespace Test.Functional
         Debug.Assert(dt.Rows[1][7].ToString() == "fk_game_event_code");
         Debug.Assert(dt.Rows[1][8].ToString() == "pk_event_code");
 
-        Debug.Assert(dt.Rows[0][0].ToString() == "athlete");
+        Debug.Assert(dt.Rows[0][0].ToString() == "public.athlete");
         Debug.Assert(dt.Rows[0][1].ToString() == "code");
-        Debug.Assert(dt.Rows[0][2].ToString() == "game");
+        Debug.Assert(dt.Rows[0][2].ToString() == "public.game");
         Debug.Assert(dt.Rows[0][3].ToString() == "athlete_code");
         Debug.Assert(dt.Rows[0][4].ToString() == "1");
         Debug.Assert(dt.Rows[0][5].ToString() == "1");
