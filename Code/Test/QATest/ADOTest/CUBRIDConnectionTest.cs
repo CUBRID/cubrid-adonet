@@ -1531,7 +1531,8 @@ namespace ADOTest
                 conn.Open();
 
                 //string tableName = conn.GetTableNameFromOID("@620|1|0");
-                string tableName = conn.GetTableNameFromOID("@3841|1|0");
+                //string tableName = conn.GetTableNameFromOID("@3841|1|0");
+                string tableName = conn.GetTableNameFromOID("@4481|1|0");//11.2
 
                 Assert.AreEqual("public.game", tableName);
                 LogStepPass();

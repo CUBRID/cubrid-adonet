@@ -36,6 +36,12 @@ if not "%ERRORLEVEL%" == "0" echo "Please check for 32bit V140 Relase Library." 
 devenv cas_cci_v140_dll.vcxproj /build "release|x64"
 if not "%ERRORLEVEL%" == "0" echo "Please check for 64bit V140 Relase Library." & GOTO END_SCRIPT
 
+call "%VS140COMNTOOLS%vsvars32.bat"
+devenv cas_cci_v140_dll.vcxproj /build "Debug|x86"
+if not "%ERRORLEVEL%" == "0" echo "Please check for 32bit V140 Relase Library." & GOTO END_SCRIPT
+devenv cas_cci_v140_dll.vcxproj /build "Debug|x64"
+if not "%ERRORLEVEL%" == "0" echo "Please check for 64bit V140 Relase Library." & GOTO END_SCRIPT
+
 copy %CCI_WIN_DIR%\Win32\Release\cas_cci.dll  %INSTALL_DIRS%\cascci32.dll
 copy %CCI_WIN_DIR%\x64\Release\cas_cci.dll  %INSTALL_DIRS%\cascci64.dll
 
