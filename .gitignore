@@ -1,3 +1,4 @@
+.vs/
 Code/.vs/
 Code/Src/bin/
 Code/Src/obj/
@@ -12,3 +13,4 @@ Code/Test/UI/bin/
 Code/Test/UI/obj/
 Code/TestResults/
 script/cubrid-cci/
+Installer/nsis/Build/
