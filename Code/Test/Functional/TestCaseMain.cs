@@ -255,27 +255,27 @@ namespace Test.Functional
       TestCases.ExecuteSQL("drop table if exists t", conn);
     }
 
-    private static int GetTableRowsCount(string tableName, CUBRIDConnection conn)
+    private static Int64 GetTableRowsCount(string tableName, CUBRIDConnection conn)
     {
-      int count = -1;
+      Int64 count = -1;
       string sql = "select count(*) from `" + tableName + "`";
 
       using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
       {
-        count = (int)cmd.ExecuteScalar();
+        count = (Int64)cmd.ExecuteScalar();
       }
 
       return count;
     }
 
-    private static int GetTablesCount(string tableName, CUBRIDConnection conn)
+    private static Int64 GetTablesCount(string tableName, CUBRIDConnection conn)
     {
-      int count = 0;
+      Int64 count = 0;
       string sql = "select count(*) from db_class where class_name = '" + tableName + "'";
 
       using (CUBRIDCommand cmd = new CUBRIDCommand(sql, conn))
       {
-        count = (int)cmd.ExecuteScalar();
+        count = (Int64)cmd.ExecuteScalar();
       }
 
       return count;

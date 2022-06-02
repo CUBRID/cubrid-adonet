@@ -19,7 +19,7 @@ namespace Test.Functional
         }
         private static void Test_apis_514()
         {
-            string sql = "select * from nation order by code asc";
+            string sql = "select * from public.nation order by code asc";
             CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
             CUBRIDDataReader reader = (CUBRIDDataReader)cmd.ExecuteReader(CommandBehavior.CloseConnection);
 
@@ -33,7 +33,7 @@ namespace Test.Functional
         }
         private static void Test_apis_669()
         {
-            String sql = "select s_name from code where f_name = 'Woman';select * from code;";
+            String sql = "select s_name from public.code where f_name = 'Woman';select * from public.code;";
 
             CUBRIDCommand cmd = new CUBRIDCommand(sql, conn);
 

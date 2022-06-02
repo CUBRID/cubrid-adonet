@@ -44,7 +44,7 @@ namespace CUBRID.Data.CUBRIDClient
   public sealed class CUBRIDDataReader : DbDataReader, IDataRecord
   {
     private  ColumnMetaData[] columnMetaData;
-    private  int resultCount; //Resultset rows count; Equivalent to SELECT COUNT(*)...
+    private  Int64 resultCount; //Resultset rows count; Equivalent to SELECT COUNT(*)...
     private  ResultTuple resultTuple;
     private CommandBehavior CommandBehavior; //TODO Add support
     private CUBRIDConnection conn;

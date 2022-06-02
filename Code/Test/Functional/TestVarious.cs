@@ -76,9 +76,9 @@ namespace Test.Functional
         CUBRIDSchemaProvider schema = new CUBRIDSchemaProvider(conn);
         DataTable dt = schema.GetProcedures(null);
 
-        Debug.Assert(dt.Rows.Count == 1);
-
         TestCases.ExecuteSQL("drop function sp1", conn);
+
+        Debug.Assert(dt.Rows.Count == 1);
       }
     }
 
@@ -107,9 +107,9 @@ namespace Test.Functional
         CUBRIDSchemaProvider schema = new CUBRIDSchemaProvider(conn);
         DataTable dt = schema.GetProcedures(null);
 
-        Debug.Assert(dt.Rows.Count == 1);
-
         TestCases.ExecuteSQL("drop procedure sp2", conn);
+
+        Debug.Assert(dt.Rows.Count == 1);
       }
     }
 
@@ -175,7 +175,7 @@ namespace Test.Functional
           }
           catch (Exception ex)
           {
-            string r = "Syntax: Unknown class \"xyz\". select count(*) from xyz";
+            string r = "Syntax: Unknown class \"dba.xyz\". select count(*) from [dba.xyz]";
             Debug.Assert(ex.Message.Substring(0,r.Length) == r);//todo
           }
         }
@@ -199,7 +199,7 @@ namespace Test.Functional
           }
           catch (Exception ex)
           {
-              string r = "Syntax: Unknown class \"xyz\". select count(*) from xyz";
+              string r = "Syntax: Unknown class \"dba.xyz\". select count(*) from [dba.xyz]";
               Debug.Assert(ex.Message.Substring(0, r.Length) == r);//todo
           }
         }

@@ -167,6 +167,7 @@ namespace CUBRID.Data.CUBRIDClient
         public char is_reverse_index;
         public char is_reverse_unique;
         public char is_shared;
+        int charset;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
