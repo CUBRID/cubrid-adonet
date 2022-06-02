@@ -1000,7 +1000,7 @@ namespace ADOTest
                     Assert.AreEqual("VIEW_CATALOG", dt.Columns[0].ColumnName);
                     Assert.AreEqual("VIEW_SCHEMA", dt.Columns[1].ColumnName);
                     Assert.AreEqual("VIEW_NAME", dt.Columns[2].ColumnName);
-                    Assert.AreEqual(11, dt.Rows.Count);
+                    Assert.AreEqual(0, dt.Rows.Count);
                     LogStepPass();
                 }
                 else
@@ -1576,7 +1576,7 @@ namespace ADOTest
                 DBHelper.ExecuteSQL("drop table if exists t", conn);
 
                 //Create a new table with a sequence
-                DBHelper.ExecuteSQL("CREATE TABLE t(seq SEQUENCE(int))", conn);
+                DBHelper.ExecuteSQL("CREATE TABLE t(seq SEQUENCE(int)) DONT_REUSE_OID", conn);
                 //Insert some data in the sequence column
                 DBHelper.ExecuteSQL("INSERT INTO t(seq) VALUES({0,1,2,3,4,5,6})", conn);
                 CUBRIDOid oid = new CUBRIDOid("@0|0|0");
@@ -1664,7 +1664,7 @@ namespace ADOTest
                 DBHelper.ExecuteSQL("DROP TABLE IF EXISTS t", conn);
 
                 //Create a new table with a sequence
-                DBHelper.ExecuteSQL("CREATE TABLE t(seq SEQUENCE(int))", conn);
+                DBHelper.ExecuteSQL("CREATE TABLE t(seq SEQUENCE(int)) DONT_REUSE_OID", conn);
                 //Insert some data in the sequence column
                 DBHelper.ExecuteSQL("INSERT INTO t(seq) VALUES({0,1,2,3,4,5,6})", conn);
                 CUBRIDOid oid = new CUBRIDOid("@0|0|0");
