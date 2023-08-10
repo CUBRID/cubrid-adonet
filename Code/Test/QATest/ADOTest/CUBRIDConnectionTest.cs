@@ -310,8 +310,8 @@ namespace ADOTest
                 }
                 catch (Exception ex)
                 {
-                    //Assert.AreEqual("Not allowed to change the 'ConnectionTimeout' property while the connection state is!: Open.", ex.Message);
-                    Assert.AreEqual("Not allowed to change the 'ConnectionString' property while the connection state is!: Open.", ex.Message);
+                    Assert.AreEqual("Not allowed to change the 'ConnectionTimeout' property while the connection state is!: Open.", ex.Message);
+                    //Assert.AreEqual("Not allowed to change the 'ConnectionString' property while the connection state is!: Open.", ex.Message);
                     LogStepPass();
                 }
 
@@ -1550,7 +1550,7 @@ namespace ADOTest
 
                 //string tableName = conn.GetTableNameFromOID("@620|1|0");
                 //string tableName = conn.GetTableNameFromOID("@3841|1|0");
-                string tableName = conn.GetTableNameFromOID("@4481|1|0");//11.2
+                string tableName = conn.GetTableNameFromOID("@4545|1|0");//11.2
 
                 Assert.AreEqual("public.game", tableName);
                 LogStepPass();

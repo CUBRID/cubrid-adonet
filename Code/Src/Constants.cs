@@ -235,6 +235,7 @@ namespace CUBRID.Data.CUBRIDClient
     CCI_SCH_IMPORTED_KEYS = 17,
     CCI_SCH_EXPORTED_KEYS = 18,
     CCI_SCH_CROSS_REFERENCE = 19,
+    CCI_SCH_ATTR_WITH_SYNONYM = 20,
   }
 
   internal enum CCIPrepareOption

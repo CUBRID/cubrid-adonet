@@ -25,7 +25,7 @@ namespace Test.Functional
 
         Debug.Assert(dt.Rows[1][0].ToString() == "public.event");
         Debug.Assert(dt.Rows[1][1].ToString() == "code");
-        Debug.Assert(dt.Rows[1][2].ToString() == "pulbic.game");
+        Debug.Assert(dt.Rows[1][2].ToString() == "public.game");
         Debug.Assert(dt.Rows[1][3].ToString() == "event_code");
         Debug.Assert(dt.Rows[1][4].ToString() == "1");
         Debug.Assert(dt.Rows[1][5].ToString() == "1");
@@ -242,7 +242,7 @@ namespace Test.Functional
           Debug.Assert(row["BaseCatalogName"].ToString() == "");
           Debug.Assert(row["BaseColumnName"].ToString() == "code");
           Debug.Assert(row["BaseSchemaName"].ToString() == "");
-          Debug.Assert(row["BaseTableName"].ToString() == "athlete");
+          Debug.Assert(row["BaseTableName"].ToString() == "public.athlete");
           Debug.Assert(row["DataType"].ToString() == "System.Int32");
           Debug.Assert(row["AllowDBNull"].ToString() == "False");
           Debug.Assert(row["ProviderType"].ToString() == "");
@@ -287,7 +287,7 @@ namespace Test.Functional
 
         string queryPlan = conn.GetQueryPlanOnly("select * from athlete order by 1 desc");
 
-        Debug.Assert(queryPlan == "Join graph segments (f indicates final):\nseg[0]: [0]\nseg[1]: code[0] (f)\nseg[2]: name[0] (f)\nseg[3]: gender[0] (f)\nseg[4]: nation_code[0] (f)\nseg[5]: event[0] (f)\nJoin graph nodes:\nnode[0]: athlete athlete(6677/32) (loc 0)\n\nQuery plan:\n\niscan\n    class: athlete node[0]\n    index: pk_athlete_code  (desc_index)\n    sort:  1 desc\n    cost:  97 card 6677\n\nQuery stmt:\n\nselect athlete.code, athlete.[name], athlete.gender, athlete.nation_code, athlete.event from athlete athlete order by 1 desc \n\n/* ---> skip ORDER BY */\n");
+        Debug.Assert(queryPlan == "Join graph segments (f indicates final):\nseg[0]: [0]\nseg[1]: code[0] (f)\nseg[2]: name[0] (f)\nseg[3]: gender[0] (f)\nseg[4]: nation_code[0] (f)\nseg[5]: event[0] (f)\nJoin graph nodes:\nnode[0]: public.athlete dba.athlete(6677/32) (loc 0)\n\nQuery plan:\n\niscan\n    class: athlete node[0]\n    index: pk_athlete_code  (desc_index)\n    sort:  1 desc\n    cost:  97 card 6677\n\nQuery stmt:\n\nselect athlete.code, athlete.[name], athlete.gender, athlete.nation_code, athlete.event from athlete athlete order by 1 desc \n\n/* ---> skip ORDER BY */\n");
       }
     }
 

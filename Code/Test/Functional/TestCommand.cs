@@ -73,11 +73,11 @@ namespace Test.Functional
 
         CUBRIDCommandBuilder cmdBuilder = new CUBRIDCommandBuilder(da);
         da.UpdateCommand = cmdBuilder.GetUpdateCommand();
-        Debug.Assert(da.UpdateCommand.CommandText == "UPDATE `nation` SET `code` = ?, `name` = ?, `continent` = ?, `capital` = ? WHERE ((`code` = ?) AND (`name` = ?) AND ((? = 1 AND `continent` IS NULL) OR (`continent` = ?)) AND ((? = 1 AND `capital` IS NULL) OR (`capital` = ?)))");
+        Debug.Assert(da.UpdateCommand.CommandText == "UPDATE `public.nation` SET `code` = ?, `name` = ?, `continent` = ?, `capital` = ? WHERE ((`code` = ?) AND (`name` = ?) AND ((? = 1 AND `continent` IS NULL) OR (`continent` = ?)) AND ((? = 1 AND `capital` IS NULL) OR (`capital` = ?)))");
         da.InsertCommand = cmdBuilder.GetInsertCommand();
-        Debug.Assert(da.InsertCommand.CommandText == "INSERT INTO `nation` (`code`, `name`, `continent`, `capital`) VALUES (?, ?, ?, ?)");
+        Debug.Assert(da.InsertCommand.CommandText == "INSERT INTO `public.nation` (`code`, `name`, `continent`, `capital`) VALUES (?, ?, ?, ?)");
         da.DeleteCommand = cmdBuilder.GetDeleteCommand();
-        Debug.Assert(da.DeleteCommand.CommandText == "DELETE FROM `nation` WHERE ((`code` = ?) AND (`name` = ?) AND ((? = 1 AND `continent` IS NULL) OR (`continent` = ?)) AND ((? = 1 AND `capital` IS NULL) OR (`capital` = ?)))");
+        Debug.Assert(da.DeleteCommand.CommandText == "DELETE FROM `public.nation` WHERE ((`code` = ?) AND (`name` = ?) AND ((? = 1 AND `continent` IS NULL) OR (`continent` = ?)) AND ((? = 1 AND `capital` IS NULL) OR (`capital` = ?)))");
       }
     }
 

@@ -1,9 +1,9 @@
 Release Notes
 ================================================================================
-May 2022 - Update for release 11.1.0
+May 2022 - Update for release 11.2.0
 
 CUBRID ADO.NET Data Provider
-Version: 11.1.0.0001
+Version: 11.2.0.0002
 CUBRID engine compatible: 11.2.0
 Online Wiki: http://www.cubrid.org/wiki_apis/entry/cubrid-ado-net-driver
 ================================================================================
