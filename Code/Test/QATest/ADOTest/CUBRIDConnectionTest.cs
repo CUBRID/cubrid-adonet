@@ -1000,7 +1000,7 @@ namespace ADOTest
                     Assert.AreEqual("VIEW_CATALOG", dt.Columns[0].ColumnName);
                     Assert.AreEqual("VIEW_SCHEMA", dt.Columns[1].ColumnName);
                     Assert.AreEqual("VIEW_NAME", dt.Columns[2].ColumnName);
-                    Assert.AreEqual(0, dt.Rows.Count);
+                    Assert.AreEqual(11, dt.Rows.Count);
                     LogStepPass();
                 }
                 else
