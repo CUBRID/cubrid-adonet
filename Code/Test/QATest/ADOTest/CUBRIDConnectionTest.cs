@@ -1000,7 +1000,7 @@ namespace ADOTest
                     Assert.AreEqual("VIEW_CATALOG", dt.Columns[0].ColumnName);
                     Assert.AreEqual("VIEW_SCHEMA", dt.Columns[1].ColumnName);
                     Assert.AreEqual("VIEW_NAME", dt.Columns[2].ColumnName);
-                    Assert.AreEqual(11, dt.Rows.Count);
+                    Assert.AreEqual(0, dt.Rows.Count);
                     LogStepPass();
                 }
                 else
@@ -1233,12 +1233,17 @@ namespace ADOTest
                 if (dt != null && dt.Rows.Count > 0)
                 {
                     Assert.AreEqual("athlete_info", dt.Rows[0]["PROCEDURE_NAME"].ToString());
+                    Assert.AreEqual("", dt.Rows[0]["PACKAGE_NAME"].ToString());
                     Assert.AreEqual("FUNCTION", dt.Rows[0]["PROCEDURE_TYPE"].ToString());
                     Assert.AreEqual("INTEGER", dt.Rows[0]["RETURN_TYPE"].ToString());
                     Assert.AreEqual(4, (int)dt.Rows[0]["ARGUMENTS_COUNT"]);
                     Assert.AreEqual("JAVA", dt.Rows[0]["LANGUAGE"].ToString());
+                    Assert.AreEqual("DEFINER", dt.Rows[0]["AUTHID"].ToString());
+                    Assert.AreEqual("NO", dt.Rows[0]["IS_DETERMINISTIC"].ToString());
                     Assert.AreEqual("Athlete.Athlete_Insert(java.lang.String, java.lang.String, java.lang.String, java.lang.String) return int", dt.Rows[0]["TARGET"].ToString());
                     Assert.AreEqual("DBA", dt.Rows[0]["OWNER"].ToString());
+                    Assert.AreEqual("", dt.Rows[0]["CODE"].ToString());
+                    Assert.AreEqual("", dt.Rows[0]["COMMENT"].ToString());
 
                     LogStepPass();
                 }
@@ -1552,7 +1557,7 @@ namespace ADOTest
                 //string tableName = conn.GetTableNameFromOID("@3841|1|0");
                 string tableName = conn.GetTableNameFromOID("@4545|1|0");//11.2
 
-                Assert.AreEqual("public.game", tableName);
+                Assert.AreEqual("public.participant", tableName);
                 LogStepPass();
 
                 LogTestResult();
