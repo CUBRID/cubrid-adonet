@@ -74,12 +74,8 @@
     <Compile Include="CUBRIDCommand.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="CUBRIDCommandBuilder.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="CUBRIDConnection.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="CUBRIDCommandBuilder.cs" />
+    <Compile Include="CUBRIDConnection.cs" />
     <Compile Include="CUBRIDConnectionStringBuilder.cs" />
     <Compile Include="CUBRIDDataAdapter.cs">
       <SubType>Component</SubType>

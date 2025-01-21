@@ -2,7 +2,7 @@
 
 set FILE_NAME=CUBRID ADO.NET Data Provider 11.2.1.0003
 
-if "%VS2017COMNTOOLS%x" == (
+if "%VS2017COMNTOOLS%x" == "x" (
     echo "Please add 'VS2017COMNTOOLS' in the environment variable\n ex) C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools"
     GOTO :EOF
 )
