@@ -548,12 +548,17 @@ namespace CUBRID.Data.CUBRIDClient
             using (DataTable dt = new DataTable("Procedures"))
             {
                 dt.Columns.Add(new DataColumn("PROCEDURE_NAME", typeof(string)));
+                dt.Columns.Add(new DataColumn("PACKAGE_NAME", typeof(string)));
                 dt.Columns.Add(new DataColumn("PROCEDURE_TYPE", typeof(string)));
                 dt.Columns.Add(new DataColumn("RETURN_TYPE", typeof(string)));
                 dt.Columns.Add(new DataColumn("ARGUMENTS_COUNT", typeof(int)));
                 dt.Columns.Add(new DataColumn("LANGUAGE", typeof(string)));
+                dt.Columns.Add(new DataColumn("AUTHID", typeof(string)));
                 dt.Columns.Add(new DataColumn("TARGET", typeof(string)));
                 dt.Columns.Add(new DataColumn("OWNER", typeof(string)));
+                dt.Columns.Add(new DataColumn("IS_DETERMINISTIC", typeof(string)));
+                dt.Columns.Add(new DataColumn("CODE", typeof(string)));
+                dt.Columns.Add(new DataColumn("COMMENT", typeof(string)));
 
                 string procedureName = "%";
                 if (filters != null && filters.Length > 0 && filters[0] != null)
@@ -572,12 +577,17 @@ namespace CUBRID.Data.CUBRIDClient
                             DataRow row = dt.NewRow();
 
                             row["PROCEDURE_NAME"] = reader.GetString(0);
-                            row["PROCEDURE_TYPE"] = reader.GetString(1);
-                            row["RETURN_TYPE"] = reader.GetString(2);
-                            row["ARGUMENTS_COUNT"] = reader.GetInt(3);
-                            row["LANGUAGE"] = reader.GetString(4);
-                            row["TARGET"] = reader.GetString(5);
-                            row["OWNER"] = reader.GetString(6);
+                            row["PACKAGE_NAME"] = reader.GetString(1);
+                            row["PROCEDURE_TYPE"] = reader.GetString(2);
+                            row["RETURN_TYPE"] = reader.GetString(3);
+                            row["ARGUMENTS_COUNT"] = reader.GetInt(4);
+                            row["LANGUAGE"] = reader.GetString(5);
+                            row["AUTHID"] = reader.GetString(6);
+                            row["IS_DETERMINISTIC"] = reader.GetString(7);
+                            row["TARGET"] = reader.GetString(8);
+                            row["OWNER"] = reader.GetString(9);
+                            row["CODE"] = reader.GetString(10);
+                            row["COMMENT"] = reader.GetString(11);
 
                             dt.Rows.Add(row);
                         }
