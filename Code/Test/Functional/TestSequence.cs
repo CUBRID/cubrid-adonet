@@ -115,7 +115,7 @@ namespace Test.Functional
             ExecuteSQL("DROP TABLE IF EXISTS t", conn);
 
             //Create a new table with a collection
-            ExecuteSQL("CREATE TABLE t(s SET(bit))", conn);
+            ExecuteSQL("CREATE TABLE t(s SET(bit(4)))", conn);
             //Insert some data in the sequence column
             string[] sArray = new string[3] { "1", "0", null };
             string sql = "INSERT INTO t(s) VALUES( ?);";
